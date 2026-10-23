@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Tokens semánticos del sistema (SPEC §11). Las pantallas usan estos nombres,
+   nunca colores sueltos: bg-primario, text-texto-suave, border-borde, etc. */
+@theme {
+  --color-primario: #0f766e;
+  --color-primario-oscuro: #115e59;
+  --color-primario-suave: #f0fdfa;
+  --color-fondo: #f8fafc;
+  --color-superficie: #ffffff;
+  --color-borde: #e2e8f0;
+  --color-texto: #0f172a;
+  --color-texto-suave: #475569;
+  --color-peligro: #b91c1c;
+  --color-peligro-suave: #fef2f2;
+  --color-exito: #15803d;
+  --color-exito-suave: #f0fdf4;
+  --color-aviso: #b45309;
+  --color-aviso-suave: #fffbeb;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-fondo text-texto antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primario;
+  }
+}

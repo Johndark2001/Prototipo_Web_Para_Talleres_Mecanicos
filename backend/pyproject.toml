@@ -1,0 +1,41 @@
+[project]
+name = "taller-digital-backend"
+version = "0.1.0"
+description = "API del prototipo de gestión operativa para talleres mecánicos (zona norte de Cali)"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings>=2.6",
+    "email-validator>=2.2",
+    "pyjwt>=2.10",
+    "argon2-cffi>=23.1",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.0",
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+# La carpeta local alembic/ (migraciones) no debe confundirse con la librería.
+known-third-party = ["alembic"]

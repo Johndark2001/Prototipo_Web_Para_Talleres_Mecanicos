@@ -1,0 +1,215 @@
+// Modelo de datos — Prototipo de gestión operativa para talleres mecánicos
+// Versión 1.0 (Fase 0) — 23/10/2026 — Estado: Aprobado
+// Importar en https://dbdiagram.io
+//
+// DBML no expresa CHECK ni índices únicos parciales, así que se documentan
+// en el campo `note` de la columna o de la tabla.
+// Detalle completo en docs/modelo-datos.md
+
+Project taller_digital {
+  database_type: 'PostgreSQL'
+  Note: 'Multi-tenant lógico por taller_id (ADR-006). PostgreSQL 17 (ADR-003).'
+}
+
+Enum rol_usuario {
+  ADMIN
+  RECEPCION
+  MECANICO
+}
+
+Enum estado_orden {
+  RECIBIDO
+  EN_DIAGNOSTICO
+  ESPERANDO_REPUESTOS
+  REPARADO
+  ENTREGADO
+  CANCELADA
+}
+
+Enum tipo_movimiento {
+  ENTRADA
+  SALIDA
+  AJUSTE
+  DEVOLUCION
+}
+
+Table taller {
+  id bigint [pk, increment]
+  nombre varchar(120) [not null]
+  nit varchar(20) [note: 'Los talleres informales no tienen NIT']
+  es_formal boolean [not null, default: false]
+  telefono varchar(20)
+  direccion varchar(200)
+  siguiente_numero_orden integer [not null, default: 1, note: 'CHECK >= 1. Consecutivo de órdenes; se toma con bloqueo de fila (RN-12)']
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+}
+
+Table usuario {
+  id bigint [pk, increment]
+  taller_id bigint [not null, ref: > taller.id]
+  nombre varchar(120) [not null]
+  email varchar(254) [not null, unique, note: 'Único en todo el sistema; se guarda en minúsculas']
+  password_hash varchar(255) [not null, note: 'argon2id']
+  rol rol_usuario [not null]
+  activo boolean [not null, default: true]
+  ultimo_acceso timestamptz
+  creado_en timestamptz [not null, default: `now()`]
+}
+
+Table cliente {
+  id bigint [pk, increment]
+  taller_id bigint [not null, ref: > taller.id]
+  nombre varchar(120) [not null]
+  telefono varchar(20) [not null]
+  email varchar(254)
+  documento varchar(20) [note: 'UQ parcial (taller_id, documento) WHERE documento IS NOT NULL']
+  autoriza_datos boolean [not null, note: 'CHECK autoriza_datos = true (RN-10, Ley 1581)']
+  fecha_autorizacion timestamptz [not null]
+  anonimizado boolean [not null, default: false, note: 'RN-11']
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table vehiculo {
+  id bigint [pk, increment]
+  taller_id bigint [not null, ref: > taller.id]
+  cliente_id bigint [not null, ref: > cliente.id, note: 'Dueño actual']
+  placa varchar(10) [not null, note: 'Mayúsculas, sin espacios ni guiones (RN-20)']
+  marca varchar(50) [not null]
+  modelo varchar(50) [not null]
+  anio smallint [note: 'CHECK anio BETWEEN 1950 AND 2100']
+  color varchar(30)
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (taller_id, placa) [unique, name: 'uq_vehiculo_taller_placa']
+  }
+}
+
+Table orden_trabajo {
+  id bigint [pk, increment]
+  taller_id bigint [not null, ref: > taller.id]
+  numero integer [not null, note: 'Consecutivo por taller (RN-12)']
+  vehiculo_id bigint [not null, ref: > vehiculo.id]
+  cliente_id bigint [not null, ref: > cliente.id, note: 'Dueño en el momento de la orden']
+  mecanico_id bigint [ref: > usuario.id, note: 'Debe tener rol MECANICO (se valida en el servicio)']
+  creado_por bigint [not null, ref: > usuario.id]
+  codigo_seguimiento varchar(32) [not null, unique, note: '>= 128 bits aleatorios, seguro para URL (ADR-005)']
+  estado estado_orden [not null, default: 'RECIBIDO']
+  kilometraje integer [note: 'CHECK >= 0']
+  motivo_ingreso text [not null]
+  diagnostico text
+  trabajo_realizado text [note: 'Obligatorio para pasar a REPARADO (RN-17)']
+  motivo_cancelacion text [note: 'CHECK estado <> CANCELADA OR motivo_cancelacion IS NOT NULL (RN-18)']
+  fecha_ingreso timestamptz [not null, default: `now()`]
+  fecha_entrega_estimada date
+  fecha_entrega timestamptz [note: 'CHECK estado <> ENTREGADO OR fecha_entrega IS NOT NULL']
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (taller_id, numero) [unique, name: 'uq_orden_taller_numero']
+    (taller_id, estado) [name: 'ix_orden_taller_estado']
+    (taller_id, fecha_ingreso) [name: 'ix_orden_taller_fecha']
+  }
+
+  Note: 'UQ parcial (vehiculo_id) WHERE estado NOT IN (ENTREGADO, CANCELADA): un vehículo solo puede tener una orden abierta (RN-08)'
+}
+
+Table historial_estado_orden {
+  id bigint [pk, increment]
+  orden_id bigint [not null, ref: > orden_trabajo.id]
+  estado_anterior estado_orden [note: 'Nulo solo en el registro de creación']
+  estado_nuevo estado_orden [not null, note: 'CHECK estado_nuevo IS DISTINCT FROM estado_anterior']
+  usuario_id bigint [not null, ref: > usuario.id]
+  fecha timestamptz [not null, default: `now()`]
+  nota text [note: 'Obligatoria al retroceder de estado']
+
+  indexes {
+    (orden_id, fecha) [name: 'ix_historial_orden_fecha']
+  }
+
+  Note: 'Solo inserciones (RN-01, RN-11). Base del reporte R2 de tiempos por etapa.'
+}
+
+Table asignacion_orden {
+  id bigint [pk, increment]
+  orden_id bigint [not null, ref: > orden_trabajo.id]
+  mecanico_id bigint [not null, ref: > usuario.id]
+  asignado_por bigint [not null, ref: > usuario.id]
+  fecha timestamptz [not null, default: `now()`]
+  nota text
+
+  Note: 'Solo inserciones (RN-14, P-7)'
+}
+
+Table servicio {
+  id bigint [pk, increment]
+  taller_id bigint [not null, ref: > taller.id]
+  nombre varchar(120) [not null]
+  precio_referencia numeric(12,2) [not null, note: 'CHECK >= 0']
+  activo boolean [not null, default: true]
+
+  indexes {
+    (taller_id, nombre) [unique, name: 'uq_servicio_taller_nombre']
+  }
+}
+
+Table orden_servicio {
+  id bigint [pk, increment]
+  orden_id bigint [not null, ref: > orden_trabajo.id]
+  servicio_id bigint [ref: > servicio.id, note: 'Nulo si la línea se escribió como texto libre']
+  descripcion varchar(200) [not null]
+  cantidad numeric(10,2) [not null, note: 'CHECK > 0']
+  precio_unitario numeric(12,2) [not null, note: 'CHECK >= 0. Copia del precio en ese momento (RN-05)']
+  registrado_por bigint [not null, ref: > usuario.id, note: 'RN-15']
+  creado_en timestamptz [not null, default: `now()`]
+}
+
+Table repuesto {
+  id bigint [pk, increment]
+  taller_id bigint [not null, ref: > taller.id]
+  codigo varchar(30) [not null]
+  nombre varchar(120) [not null]
+  unidad varchar(20) [not null, default: 'unidad']
+  precio_venta numeric(12,2) [not null, note: 'CHECK >= 0']
+  stock_actual numeric(10,2) [not null, default: 0, note: 'CHECK stock_actual >= 0 (RN-02)']
+  stock_minimo numeric(10,2) [not null, default: 0, note: 'CHECK >= 0']
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (taller_id, codigo) [unique, name: 'uq_repuesto_taller_codigo']
+  }
+}
+
+Table orden_repuesto {
+  id bigint [pk, increment]
+  orden_id bigint [not null, ref: > orden_trabajo.id]
+  repuesto_id bigint [not null, ref: > repuesto.id]
+  cantidad numeric(10,2) [not null, note: 'CHECK > 0']
+  precio_unitario numeric(12,2) [not null, note: 'CHECK >= 0. Copia del precio en ese momento (RN-05)']
+  registrado_por bigint [not null, ref: > usuario.id, note: 'RN-15']
+  creado_en timestamptz [not null, default: `now()`]
+}
+
+Table movimiento_inventario {
+  id bigint [pk, increment]
+  repuesto_id bigint [not null, ref: > repuesto.id]
+  orden_id bigint [ref: > orden_trabajo.id, note: 'Obligatorio si tipo es SALIDA o DEVOLUCION']
+  usuario_id bigint [not null, ref: > usuario.id]
+  tipo tipo_movimiento [not null]
+  cantidad numeric(10,2) [not null, note: 'Con signo: + ENTRADA/DEVOLUCION, - SALIDA, <> 0 AJUSTE']
+  stock_resultante numeric(10,2) [not null, note: 'CHECK >= 0']
+  fecha timestamptz [not null, default: `now()`]
+  nota text [note: 'Obligatoria en AJUSTE']
+
+  indexes {
+    (repuesto_id, fecha) [name: 'ix_movimiento_repuesto_fecha']
+  }
+
+  Note: 'Solo inserciones (RN-11). CHECK: (tipo IN (ENTRADA, DEVOLUCION) AND cantidad > 0) OR (tipo = SALIDA AND cantidad < 0) OR (tipo = AJUSTE AND cantidad <> 0); además (tipo NOT IN (SALIDA, DEVOLUCION) OR orden_id IS NOT NULL)'
+}

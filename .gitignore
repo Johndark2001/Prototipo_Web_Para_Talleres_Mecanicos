@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Secretos y configuración local (ver .env.example)
+.env
+.env.*
+!.env.example
+
+# Editor y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
