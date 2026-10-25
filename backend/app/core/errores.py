@@ -36,6 +36,16 @@ class NoEncontrado(ErrorAplicacion):
     code = "NO_ENCONTRADO"
 
 
+class DatosInvalidos(ErrorAplicacion):
+    """Dato que solo la base puede validar (p. ej. placa repetida). Mismo formato que Pydantic."""
+
+    status_code = 422
+    code = "DATOS_INVALIDOS"
+
+    def __init__(self, campo: str, mensaje: str):
+        super().__init__("Revise los datos enviados", [{"campo": campo, "mensaje": mensaje}])
+
+
 class Conflicto(ErrorAplicacion):
     status_code = 409
     code = "CONFLICTO"
@@ -50,6 +60,9 @@ def cuerpo_error(code: str, message: str, details: Any = None) -> dict:
     return {"error": {"code": code, "message": message, "details": details}}
 
 
+# Tipo de los PydanticCustomError de app/schemas: su mensaje ya está en español.
+TIPO_ERROR_PROPIO = "dato_invalido"
+
 _MENSAJES_HTTP = {
     404: ("NO_ENCONTRADO", "Recurso no encontrado"),
     405: ("METODO_NO_PERMITIDO", "Método no permitido"),
@@ -60,6 +73,8 @@ def _mensaje_validacion(error: dict) -> str:
     """Traduce los errores de Pydantic al español del taller (RNF-08)."""
     tipo = error.get("type", "")
     contexto = error.get("ctx") or {}
+    if tipo == TIPO_ERROR_PROPIO:
+        return error["msg"]
     if tipo == "missing":
         return "Este campo es obligatorio"
     if tipo == "string_too_short":
@@ -70,8 +85,12 @@ def _mensaje_validacion(error: dict) -> str:
         return "Opción no válida"
     if tipo == "value_error" and "email" in str(error.get("msg", "")).lower():
         return "Correo no válido"
-    if tipo in ("greater_than_equal", "less_than_equal"):
-        return "Valor fuera del rango permitido"
+    if tipo == "greater_than_equal":
+        return f"Debe ser mayor o igual a {contexto.get('ge')}"
+    if tipo == "less_than_equal":
+        return f"Debe ser menor o igual a {contexto.get('le')}"
+    if tipo in ("int_parsing", "int_type", "int_from_float"):
+        return "Debe ser un número entero"
     return "Valor no válido"
 
 

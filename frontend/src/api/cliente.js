@@ -68,6 +68,14 @@ export const api = {
   patch: (ruta, cuerpo) => solicitar('PATCH', ruta, cuerpo),
 }
 
+/** Arma "/ruta?a=1&b=2" omitiendo los parámetros vacíos; URLSearchParams escapa los valores. */
+export function conParametros(ruta, parametros) {
+  const consulta = new URLSearchParams(
+    Object.entries(parametros).filter(([, valor]) => valor !== undefined && valor !== null && valor !== ''),
+  ).toString()
+  return consulta ? `${ruta}?${consulta}` : ruta
+}
+
 /** Convierte los detalles de un 422 en { campo: mensaje } para los formularios. */
 export function erroresPorCampo(error) {
   if (!(error instanceof ErrorApi) || !Array.isArray(error.details)) return {}

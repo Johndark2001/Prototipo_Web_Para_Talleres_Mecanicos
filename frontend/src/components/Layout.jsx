@@ -2,11 +2,14 @@ import { NavLink, Outlet } from 'react-router'
 
 import { ETIQUETAS_ROL, ROLES } from '../constantes.js'
 import { useSesion } from '../sesion/contexto.js'
+import BuscadorPlaca from './BuscadorPlaca.jsx'
 import Icono from './Icono.jsx'
 
 // Cada semana se agregan aquí los módulos nuevos (clientes, órdenes, inventario…).
 const MENU = [
   { a: '/', etiqueta: 'Inicio', icono: 'inicio', roles: Object.values(ROLES) },
+  { a: '/clientes', etiqueta: 'Clientes', icono: 'cliente', roles: Object.values(ROLES) },
+  { a: '/vehiculos', etiqueta: 'Vehículos', icono: 'carro', roles: Object.values(ROLES) },
   { a: '/usuarios', etiqueta: 'Usuarios', icono: 'usuarios', roles: [ROLES.ADMIN] },
 ]
 
@@ -53,13 +56,15 @@ export default function Layout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-borde bg-superficie px-4 py-3">
-          <div className="min-w-0">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-borde bg-superficie px-4 py-3">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{taller.nombre}</p>
             <p className="truncate text-xs text-texto-suave">
               {usuario.nombre} · {ETIQUETAS_ROL[usuario.rol]}
             </p>
           </div>
+          {/* En el celular el buscador ocupa su propia fila, debajo del nombre del taller. */}
+          <BuscadorPlaca className="order-last w-full md:order-none md:w-72" />
           <button
             type="button"
             onClick={cerrarSesion}

@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 
 from sqlalchemy import MetaData, create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import obtener_configuracion
@@ -31,3 +32,9 @@ SesionLocal = sessionmaker(bind=motor, autoflush=False, expire_on_commit=False)
 def obtener_db() -> Iterator[Session]:
     with SesionLocal() as db:
         yield db
+
+
+def restriccion_violada(error: IntegrityError) -> str | None:
+    """Nombre de la restricción que rechazó la operación (gracias a CONVENCION_NOMBRES)."""
+    diagnostico = getattr(error.orig, "diag", None)
+    return getattr(diagnostico, "constraint_name", None)

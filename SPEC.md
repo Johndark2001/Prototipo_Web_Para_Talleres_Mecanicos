@@ -543,7 +543,7 @@ La fecha exacta de sustentación no está confirmada.
 
 | Bloque | Contenido |
 |---|---|
-| Semana 5 | Reportes RF-15, con prioridad en R2 porque es la evidencia de la tesis. Dashboard completo. Seguridad: límite de solicitudes, cabeceras y auditoría de dependencias. Completar RNF-09. |
+| Semana 5 | Reportes RF-15, con prioridad en R2 porque es la evidencia de la tesis. Dashboard completo. Seguridad: límite de solicitudes, cabeceras y auditoría de dependencias. Completar RNF-09. Anonimización del cliente (RN-11, RNF-06; decisión S2-5). |
 | Semana 6 | Manual (RF-21). Funciones *Should* si hay tiempo. Preparar los instrumentos del piloto. |
 | Semana 7 en adelante | Piloto con datos reales y autorización (H-5): medir primero el proceso en papel, capacitar y aplicar el cuestionario de usabilidad. Ajustar los capítulos de la tesis (H-3). |
 
@@ -681,6 +681,16 @@ P/I = probabilidad / impacto.
 **APROBADA el 23/10/2026.** El autor aprobó este SPEC, el modelo de datos, los ADR-001 a ADR-006 y la arquitectura.
 
 La Fase 1 (semana 1 de §17.1) **solo empieza con la autorización expresa del autor**.
+
+### 21.4 Decisiones de la Semana 2 (aprobadas por el autor el 25/10/2026)
+
+| ID | Decisión |
+|---|---|
+| S2-1 | La placa, ya normalizada (RN-20), tiene de 5 a 7 letras o números. |
+| S2-2 | El teléfono tiene de 7 a 15 dígitos, con un `+` inicial opcional. Se guarda sin espacios, guiones, puntos ni paréntesis. |
+| S2-3 | El documento se guarda sin espacios, puntos ni guiones y es único por taller cuando se registra. Un documento repetido responde 422, igual que una placa repetida. |
+| S2-4 | No se puede asociar un vehículo, ni al crearlo ni al cambiarle el dueño, a un cliente desactivado. |
+| S2-5 | La anonimización del cliente (RN-11, RNF-06) se aplaza hasta después del MVP funcional (§17.2). |
 
 ---
 

@@ -5,6 +5,7 @@ vacía en cada prueba: no apunte esta variable a la base de desarrollo.
 """
 
 import os
+from datetime import UTC, datetime
 from pathlib import Path
 
 from dotenv import dotenv_values
@@ -29,7 +30,7 @@ from sqlalchemy import text  # noqa: E402
 from app.core.db import SesionLocal, motor  # noqa: E402
 from app.core.seguridad import hashear_clave  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import RolUsuario, Taller, Usuario  # noqa: E402
+from app.models import Cliente, RolUsuario, Taller, Usuario, Vehiculo  # noqa: E402
 
 CLAVE = "clave-segura-1"
 
@@ -49,7 +50,9 @@ def esquema():
 def limpiar_tablas():
     yield
     with motor.begin() as conexion:
-        conexion.execute(text("TRUNCATE usuario, taller RESTART IDENTITY CASCADE"))
+        conexion.execute(
+            text("TRUNCATE vehiculo, cliente, usuario, taller RESTART IDENTITY CASCADE")
+        )
 
 
 @pytest.fixture
@@ -102,6 +105,44 @@ def taller_b(db) -> Taller:
     db.add(taller)
     db.commit()
     return taller
+
+
+@pytest.fixture
+def crear_cliente(db):
+    """Crea el cliente directamente en la base, sin pasar por la API."""
+
+    def _crear(taller: Taller, nombre: str = "Ana Gómez", **campos) -> Cliente:
+        cliente = Cliente(
+            taller_id=taller.id,
+            nombre=nombre,
+            telefono=campos.pop("telefono", "3001234567"),
+            autoriza_datos=True,
+            fecha_autorizacion=datetime.now(UTC),
+            **campos,
+        )
+        db.add(cliente)
+        db.commit()
+        return cliente
+
+    return _crear
+
+
+@pytest.fixture
+def crear_vehiculo(db):
+    def _crear(cliente: Cliente, placa: str = "ABC123", **campos) -> Vehiculo:
+        vehiculo = Vehiculo(
+            taller_id=cliente.taller_id,
+            cliente_id=cliente.id,
+            placa=placa,
+            marca=campos.pop("marca", "Mazda"),
+            modelo=campos.pop("modelo", "3"),
+            **campos,
+        )
+        db.add(vehiculo)
+        db.commit()
+        return vehiculo
+
+    return _crear
 
 
 def iniciar_sesion(cliente: TestClient, email: str, clave: str = CLAVE):

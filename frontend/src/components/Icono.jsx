@@ -15,6 +15,13 @@ const TRAZOS = {
   check: 'M20 6 9 17l-5-5',
   info: 'M12 16v-4M12 8h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20',
   cerrar: 'M18 6 6 18M6 6l12 12',
+  cliente: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
+  carro:
+    'M19 17h2v-4l-2.5-5h-13L3 13v4h2M3 13h18M7.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4M16.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4M9.5 17h5',
+  buscar: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16M21 21l-4.3-4.3',
+  lapiz: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
+  derecha: 'm9 18 6-6-6-6',
+  atras: 'M19 12H5M12 19l-7-7 7-7',
 }
 
 export default function Icono({ nombre, className = 'size-5', titulo }) {

@@ -35,3 +35,7 @@ def requiere_roles(*roles: RolUsuario):
 
 
 SoloAdmin = Annotated[Usuario, Depends(requiere_roles(RolUsuario.ADMIN))]
+# Matriz de permisos (SPEC §3): el mecánico consulta clientes y vehículos pero no los edita.
+AdminORecepcion = Annotated[
+    Usuario, Depends(requiere_roles(RolUsuario.ADMIN, RolUsuario.RECEPCION))
+]
