@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errores import Conflicto, NoEncontrado
 from app.core.seguridad import hashear_clave
-from app.models import RolUsuario, Usuario
+from app.models import ESTADOS_FINALES, OrdenTrabajo, RolUsuario, Usuario
 from app.schemas.usuarios import UsuarioActualizar, UsuarioCrear
 
 MENSAJE_CORREO_DUPLICADO = "Ya existe un usuario con ese correo"
@@ -76,7 +76,47 @@ def actualizar(db: Session, actual: Usuario, usuario_id: int, datos: UsuarioActu
     ):
         raise Conflicto("No puede cambiar su propio rol ni desactivar su propia cuenta")
 
+    deja_de_ser_mecanico = cambios.get("activo") is False or (
+        cambios.get("rol", usuario.rol) != RolUsuario.MECANICO
+    )
+    if usuario.rol == RolUsuario.MECANICO and deja_de_ser_mecanico:
+        abiertas = _ordenes_abiertas(db, usuario.id)
+        if abiertas:
+            # RN-16: sus órdenes quedarían sin un mecánico que pueda trabajarlas.
+            raise Conflicto(
+                f"{usuario.nombre} tiene {abiertas} "
+                f"{'orden abierta' if abiertas == 1 else 'órdenes abiertas'}. "
+                "Reasígnelas a otro mecánico antes de desactivarlo o cambiarle el rol."
+            )
+
     for campo, valor in cambios.items():
         setattr(usuario, campo, valor)
     db.commit()
     return usuario
+
+
+def _ordenes_abiertas(db: Session, mecanico_id: int) -> int:
+    consulta = select(func.count(OrdenTrabajo.id)).where(
+        OrdenTrabajo.mecanico_id == mecanico_id, OrdenTrabajo.estado.notin_(ESTADOS_FINALES)
+    )
+    return db.scalar(consulta) or 0
+
+
+def listar_mecanicos(db: Session, actual: Usuario) -> list[tuple[Usuario, int]]:
+    """Mecánicos activos con su carga de órdenes abiertas, para repartir el trabajo (RF-07)."""
+    abiertas = (
+        select(func.count(OrdenTrabajo.id))
+        .where(OrdenTrabajo.mecanico_id == Usuario.id, OrdenTrabajo.estado.notin_(ESTADOS_FINALES))
+        .correlate(Usuario)
+        .scalar_subquery()
+    )
+    filas = db.execute(
+        select(Usuario, abiertas)
+        .where(
+            Usuario.taller_id == actual.taller_id,
+            Usuario.rol == RolUsuario.MECANICO,
+            Usuario.activo,
+        )
+        .order_by(Usuario.nombre, Usuario.id)
+    ).all()
+    return [(usuario, cantidad) for usuario, cantidad in filas]

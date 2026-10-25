@@ -8,6 +8,9 @@ import Clientes from './pages/Clientes.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Login from './pages/Login.jsx'
 import NoEncontrada from './pages/NoEncontrada.jsx'
+import OrdenDetalle from './pages/OrdenDetalle.jsx'
+import OrdenNueva from './pages/OrdenNueva.jsx'
+import Ordenes from './pages/Ordenes.jsx'
 import Usuarios from './pages/Usuarios.jsx'
 import VehiculoDetalle from './pages/VehiculoDetalle.jsx'
 import VehiculoFormulario from './pages/VehiculoFormulario.jsx'
@@ -29,12 +32,15 @@ export default function App() {
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="ordenes" element={<Ordenes />} />
+            <Route path="ordenes/:id" element={<OrdenDetalle />} />
             <Route path="clientes" element={<Clientes />} />
             <Route path="clientes/:id" element={<ClienteDetalle />} />
             <Route path="vehiculos" element={<Vehiculos />} />
             <Route path="vehiculos/:id" element={<VehiculoDetalle />} />
-            {/* Crear y editar: solo ADMIN y RECEPCION; el mecánico solo consulta (SPEC §3). */}
+            {/* Recibir carros, crear y editar: solo ADMIN y RECEPCION (SPEC §3). */}
             <Route element={<RutaProtegida roles={ROLES_EDITAN_CLIENTES} />}>
+              <Route path="ordenes/nueva" element={<OrdenNueva />} />
               <Route path="clientes/nuevo" element={<ClienteFormulario />} />
               <Route path="clientes/:id/editar" element={<ClienteFormulario />} />
               <Route path="vehiculos/nuevo" element={<VehiculoFormulario />} />

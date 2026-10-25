@@ -33,6 +33,16 @@ from app.main import app  # noqa: E402
 from app.models import Cliente, RolUsuario, Taller, Usuario, Vehiculo  # noqa: E402
 
 CLAVE = "clave-segura-1"
+# Hijas antes que padres; CASCADE cubre una tabla nueva que se olvide agregar aquí.
+TABLAS = [
+    "asignacion_orden",
+    "historial_estado_orden",
+    "orden_trabajo",
+    "vehiculo",
+    "cliente",
+    "usuario",
+    "taller",
+]
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -50,9 +60,7 @@ def esquema():
 def limpiar_tablas():
     yield
     with motor.begin() as conexion:
-        conexion.execute(
-            text("TRUNCATE vehiculo, cliente, usuario, taller RESTART IDENTITY CASCADE")
-        )
+        conexion.execute(text(f"TRUNCATE {', '.join(TABLAS)} RESTART IDENTITY CASCADE"))
 
 
 @pytest.fixture

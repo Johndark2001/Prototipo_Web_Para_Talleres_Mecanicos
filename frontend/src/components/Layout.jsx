@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router'
 
-import { ETIQUETAS_ROL, ROLES } from '../constantes.js'
+import { ETIQUETAS_ROL, ROLES, ROLES_EDITAN_CLIENTES } from '../constantes.js'
 import { useSesion } from '../sesion/contexto.js'
 import BuscadorPlaca from './BuscadorPlaca.jsx'
 import Icono from './Icono.jsx'
@@ -8,6 +8,8 @@ import Icono from './Icono.jsx'
 // Cada semana se agregan aquí los módulos nuevos (clientes, órdenes, inventario…).
 const MENU = [
   { a: '/', etiqueta: 'Inicio', icono: 'inicio', roles: Object.values(ROLES) },
+  { a: '/ordenes', etiqueta: 'Órdenes', icono: 'orden', roles: ROLES_EDITAN_CLIENTES },
+  { a: '/ordenes', etiqueta: 'Mis órdenes', icono: 'orden', roles: [ROLES.MECANICO] },
   { a: '/clientes', etiqueta: 'Clientes', icono: 'cliente', roles: Object.values(ROLES) },
   { a: '/vehiculos', etiqueta: 'Vehículos', icono: 'carro', roles: Object.values(ROLES) },
   { a: '/usuarios', etiqueta: 'Usuarios', icono: 'usuarios', roles: [ROLES.ADMIN] },

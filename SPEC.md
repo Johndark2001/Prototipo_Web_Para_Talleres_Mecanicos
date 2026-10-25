@@ -692,6 +692,18 @@ La Fase 1 (semana 1 de §17.1) **solo empieza con la autorización expresa del a
 | S2-4 | No se puede asociar un vehículo, ni al crearlo ni al cambiarle el dueño, a un cliente desactivado. |
 | S2-5 | La anonimización del cliente (RN-11, RNF-06) se aplaza hasta después del MVP funcional (§17.2). |
 
+### 21.5 Decisiones de la Semana 3 (aprobadas por el autor el 25/10/2026)
+
+| ID | Decisión |
+|---|---|
+| S3-1 | Al devolver una orden desde `REPARADO`, vuelve al estado desde el que llegó (`EN_DIAGNOSTICO` o `ESPERANDO_REPUESTOS`), según el historial de estados. |
+| S3-2 | RN-16 impide desactivar a un mecánico con órdenes abiertas y también cambiarle el rol. |
+| S3-3 | No se abre una orden si el vehículo o su dueño están desactivados. |
+| S3-4 | La fecha estimada de entrega no puede ser anterior al día en que se registra. |
+| S3-5 | Al reasignar una orden, el mecánico anterior deja de verla: el mecánico solo ve las órdenes asignadas a él (§3). |
+| S3-6 | Existe un listado de mecánicos activos con sus órdenes abiertas (`/api/v1/mecanicos`) para ADMIN y RECEPCION, que lo necesita para asignar y no tiene acceso a la gestión de usuarios. |
+| S3-7 | La mano de obra y los repuestos de la orden se registran en la Semana 4, junto con la liquidación (§17.1). |
+
 ---
 
 ## Anexo A — Bocetos de pantallas

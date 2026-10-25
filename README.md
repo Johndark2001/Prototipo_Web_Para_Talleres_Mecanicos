@@ -91,7 +91,8 @@ Los crea `semilla_demo`. La clave de todos es `demo12345`.
 | Taller Demo Chipichape | admin@chipichape.demo.co | Administrador |
 | Taller Demo Chipichape | mecanico@chipichape.demo.co | Mecánico |
 
-También crea clientes y carros ficticios. Los dos talleres tienen un carro con la placa
+También crea clientes, carros y órdenes ficticias en distintos estados (recibida sin
+mecánico, en diagnóstico, esperando repuestos y entregada). Los dos talleres tienen un carro con la placa
 `ABC123` a propósito: buscarla desde cada taller sirve para comprobar el aislamiento.
 La semilla se puede volver a ejecutar sin duplicar datos.
 

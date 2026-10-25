@@ -1,19 +1,42 @@
 import { Link, useParams } from 'react-router'
 
+import { conParametros } from '../api/cliente.js'
 import Aviso from '../components/Aviso.jsx'
 import CambioActivo from '../components/CambioActivo.jsx'
 import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import ErrorCarga from '../components/ErrorCarga.jsx'
-import EstadoVacio from '../components/EstadoVacio.jsx'
 import EtiquetaActivo from '../components/EtiquetaActivo.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
+import ListaOrdenes from '../components/ListaOrdenes.jsx'
 import Placa from '../components/Placa.jsx'
 import { ROLES_EDITAN_CLIENTES } from '../constantes.js'
 import { describirVehiculo, formatearTelefono } from '../formato.js'
 import { useAvisoNavegacion } from '../hooks/useAvisoNavegacion.js'
 import { useConsulta } from '../hooks/useConsulta.js'
 import { useSesion } from '../sesion/contexto.js'
+
+/** RN-08: si el carro ya tiene una orden abierta, se lleva a ella en vez de abrir otra. */
+function AccesoOrden({ vehiculoId }) {
+  const { datos } = useConsulta(
+    conParametros('/ordenes', { vehiculo_id: vehiculoId, abiertas: true, page_size: 1 }),
+  )
+  if (!datos) return null
+  const abierta = datos.data[0]
+  if (abierta) {
+    return (
+      <EnlaceBoton to={`/ordenes/${abierta.id}`} variante="secundario">
+        Ver orden abierta #{abierta.numero}
+      </EnlaceBoton>
+    )
+  }
+  return (
+    <EnlaceBoton to={`/ordenes/nueva?vehiculo=${vehiculoId}`}>
+      <Icono nombre="mas" />
+      Nueva orden para este carro
+    </EnlaceBoton>
+  )
+}
 
 export default function VehiculoDetalle() {
   const { id } = useParams()
@@ -91,11 +114,19 @@ export default function VehiculoDetalle() {
         </a>
       </section>
 
-      <h2 className="text-lg font-semibold">Historial de mantenimiento</h2>
-      <EstadoVacio
-        icono="llave"
-        titulo="Este carro todavía no tiene órdenes"
-        texto="Aquí aparecerán las órdenes de trabajo del carro: fecha, motivo, kilometraje y estado."
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Historial de mantenimiento</h2>
+        {puedeEditar && vehiculo.activo && cliente.activo && (
+          <AccesoOrden vehiculoId={vehiculo.id} />
+        )}
+      </div>
+      <ListaOrdenes
+        filtros={{ vehiculo_id: vehiculo.id }}
+        mostrarVehiculo={false}
+        vacio={{
+          titulo: 'Este carro todavía no tiene órdenes',
+          texto: 'Aquí aparecerán sus órdenes de trabajo: fecha, motivo, mecánico y estado.',
+        }}
       />
     </div>
   )

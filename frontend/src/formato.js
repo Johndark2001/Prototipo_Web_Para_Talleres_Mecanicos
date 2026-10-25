@@ -24,3 +24,23 @@ export function formatearFecha(iso) {
 export function describirVehiculo({ marca, modelo, anio }) {
   return [marca, modelo, anio].filter(Boolean).join(' ')
 }
+
+export function formatearFechaHora(iso) {
+  return new Date(iso).toLocaleString('es-CO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+/** "2026-11-10" → "10/11/2026". Sin pasar por Date: en Colombia (UTC−5) mostraría el día anterior. */
+export function formatearDia(fecha) {
+  const [anio, mes, dia] = fecha.split('-')
+  return `${dia}/${mes}/${anio}`
+}
+
+export function formatearKilometraje(km) {
+  return `${km.toLocaleString('es-CO')} km`
+}
