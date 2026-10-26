@@ -6,11 +6,15 @@ import ClienteDetalle from './pages/ClienteDetalle.jsx'
 import ClienteFormulario from './pages/ClienteFormulario.jsx'
 import Clientes from './pages/Clientes.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import Inventario from './pages/Inventario.jsx'
 import Login from './pages/Login.jsx'
 import NoEncontrada from './pages/NoEncontrada.jsx'
 import OrdenDetalle from './pages/OrdenDetalle.jsx'
 import OrdenNueva from './pages/OrdenNueva.jsx'
 import Ordenes from './pages/Ordenes.jsx'
+import RepuestoDetalle from './pages/RepuestoDetalle.jsx'
+import RepuestoFormulario from './pages/RepuestoFormulario.jsx'
+import Seguimiento from './pages/Seguimiento.jsx'
 import Usuarios from './pages/Usuarios.jsx'
 import VehiculoDetalle from './pages/VehiculoDetalle.jsx'
 import VehiculoFormulario from './pages/VehiculoFormulario.jsx'
@@ -24,6 +28,8 @@ export default function App() {
       <ProveedorSesion>
         <Routes>
           <Route path="/login" element={<Login />} />
+          {/* Pública: el cliente entra con el enlace, sin cuenta (P-4, ADR-005). */}
+          <Route path="/seguimiento/:codigo" element={<Seguimiento />} />
           <Route
             element={
               <RutaProtegida>
@@ -38,6 +44,13 @@ export default function App() {
             <Route path="clientes/:id" element={<ClienteDetalle />} />
             <Route path="vehiculos" element={<Vehiculos />} />
             <Route path="vehiculos/:id" element={<VehiculoDetalle />} />
+            <Route path="inventario" element={<Inventario />} />
+            {/* Mover el stock y editar el catálogo: solo ADMIN (SPEC §3). */}
+            <Route element={<RutaProtegida roles={[ROLES.ADMIN]} />}>
+              <Route path="inventario/nuevo" element={<RepuestoFormulario />} />
+              <Route path="inventario/:id" element={<RepuestoDetalle />} />
+              <Route path="inventario/:id/editar" element={<RepuestoFormulario />} />
+            </Route>
             {/* Recibir carros, crear y editar: solo ADMIN y RECEPCION (SPEC §3). */}
             <Route element={<RutaProtegida roles={ROLES_EDITAN_CLIENTES} />}>
               <Route path="ordenes/nueva" element={<OrdenNueva />} />

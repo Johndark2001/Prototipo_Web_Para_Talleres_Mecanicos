@@ -29,6 +29,17 @@ export const ESTADOS_ORDEN = {
   CANCELADA: { etiqueta: 'Cancelada', icono: 'cerrar', clase: 'bg-fondo text-texto-suave' },
 }
 
+// Movimientos de inventario: el signo de la cantidad dice si entró o salió del estante.
+export const TIPOS_MOVIMIENTO = {
+  ENTRADA: 'Entrada',
+  SALIDA: 'Salida a orden',
+  AJUSTE: 'Ajuste por conteo',
+  DEVOLUCION: 'Devolución',
+}
+
+// Sugerencias para el campo unidad; se puede escribir otra.
+export const UNIDADES = ['unidad', 'litro', 'galón', 'juego', 'kit', 'metro', 'par']
+
 // Texto del botón que lleva la orden a cada estado.
 export const ACCIONES_ESTADO = {
   EN_DIAGNOSTICO: 'Iniciar diagnóstico',

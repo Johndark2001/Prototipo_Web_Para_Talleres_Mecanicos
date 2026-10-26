@@ -1,9 +1,12 @@
 from app.models.cliente import Cliente
+from app.models.inventario import MovimientoInventario, Repuesto, Servicio, TipoMovimiento
 from app.models.orden import (
     ESTADOS_FINALES,
     AsignacionOrden,
     EstadoOrden,
     HistorialEstadoOrden,
+    OrdenRepuesto,
+    OrdenServicio,
     OrdenTrabajo,
 )
 from app.models.taller import Taller
@@ -16,9 +19,15 @@ __all__ = [
     "Cliente",
     "EstadoOrden",
     "HistorialEstadoOrden",
+    "MovimientoInventario",
+    "OrdenRepuesto",
+    "OrdenServicio",
     "OrdenTrabajo",
+    "Repuesto",
     "RolUsuario",
+    "Servicio",
     "Taller",
+    "TipoMovimiento",
     "Usuario",
     "Vehiculo",
 ]

@@ -44,3 +44,36 @@ export function formatearDia(fecha) {
 export function formatearKilometraje(km) {
   return `${km.toLocaleString('es-CO')} km`
 }
+
+// La API envía montos y cantidades como texto decimal ("25000.00") para no perder precisión
+// (SPEC §10). Aquí solo se convierten para mostrarlos; las cuentas las hace el servidor.
+
+/** "143500.50" → "$ 143.500,50"; sin decimales cuando son cero ("$ 25.000"). */
+export function formatearPesos(valor) {
+  const numero = Number(valor)
+  return numero.toLocaleString('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: Number.isInteger(numero) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+/** "4.50" → "4,5"; "2.00" → "2". */
+export function formatearCantidad(valor) {
+  return Number(valor).toLocaleString('es-CO', { maximumFractionDigits: 2 })
+}
+
+/**
+ * Lo que el usuario escribe como precio en pesos → texto que entiende la API.
+ * En Colombia "35.000" son treinta y cinco mil: se quitan puntos, espacios y "$";
+ * la coma, si la hay, separa los centavos ("35.000,50" → "35000.50").
+ */
+export function leerPesos(texto) {
+  return texto.replace(/[$\s.]/g, '').replace(',', '.')
+}
+
+/** Cantidad con coma o punto decimal ("1,5" o "1.5") → "1.5". */
+export function leerCantidad(texto) {
+  return texto.trim().replace(',', '.')
+}

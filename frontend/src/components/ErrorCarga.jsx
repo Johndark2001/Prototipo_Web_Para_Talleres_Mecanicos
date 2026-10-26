@@ -7,6 +7,7 @@ const RECURSOS = {
   cliente: { titulo: 'Este cliente no existe', volver: '/clientes', texto: 'Ver clientes' },
   vehiculo: { titulo: 'Este carro no existe', volver: '/vehiculos', texto: 'Ver vehículos' },
   orden: { titulo: 'Esta orden no existe', volver: '/ordenes', texto: 'Ver órdenes' },
+  repuesto: { titulo: 'Este repuesto no existe', volver: '/inventario', texto: 'Ver inventario' },
 }
 
 /**

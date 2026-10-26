@@ -9,15 +9,18 @@ import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
 import Placa from '../components/Placa.jsx'
 import AccionesEstado from '../components/orden/AccionesEstado.jsx'
+import EnlaceSeguimiento from '../components/orden/EnlaceSeguimiento.jsx'
 import HistorialOrden from '../components/orden/HistorialOrden.jsx'
 import LineaTiempo from '../components/orden/LineaTiempo.jsx'
+import PanelLiquidacion from '../components/orden/PanelLiquidacion.jsx'
 import PanelMecanico from '../components/orden/PanelMecanico.jsx'
 import PanelRecepcion from '../components/orden/PanelRecepcion.jsx'
 import PanelTrabajo from '../components/orden/PanelTrabajo.jsx'
-import { ESTADOS_ORDEN } from '../constantes.js'
+import { ESTADOS_ORDEN, ROLES_EDITAN_CLIENTES } from '../constantes.js'
 import { describirVehiculo, formatearTelefono } from '../formato.js'
 import { useAvisoNavegacion } from '../hooks/useAvisoNavegacion.js'
 import { useConsulta } from '../hooks/useConsulta.js'
+import { useSesion } from '../sesion/contexto.js'
 
 const textoDe = (orden) => ({
   diagnostico: orden.diagnostico ?? '',
@@ -25,6 +28,9 @@ const textoDe = (orden) => ({
 })
 
 function VistaOrden({ ordenInicial }) {
+  const { sesion } = useSesion()
+  // El mecánico no habla con el cliente: el enlace lo comparten recepción y el administrador.
+  const compartePublico = ROLES_EDITAN_CLIENTES.includes(sesion.usuario.rol)
   const [orden, setOrden] = useState(ordenInicial)
   const [borrador, setBorrador] = useState(() => textoDe(ordenInicial))
   const [guardando, setGuardando] = useState(false)
@@ -114,15 +120,27 @@ function VistaOrden({ ordenInicial }) {
         <div className="flex flex-col gap-4">
           <PanelMecanico orden={orden} alActualizar={aplicar} alError={(texto) => setAviso({ tipo: 'error', texto })} />
           <PanelRecepcion orden={orden} alActualizar={aplicar} />
+          {compartePublico && <EnlaceSeguimiento codigo={orden.codigo_seguimiento} />}
         </div>
-        <PanelTrabajo
-          orden={orden}
-          borrador={borrador}
-          alCambiar={(campo, valor) => setBorrador({ ...borrador, [campo]: valor })}
-          sucio={sucio}
-          guardando={guardando}
-          alGuardar={guardarTrabajo}
-        />
+        <div className="flex flex-col gap-4">
+          <PanelTrabajo
+            orden={orden}
+            borrador={borrador}
+            alCambiar={(campo, valor) => setBorrador({ ...borrador, [campo]: valor })}
+            sucio={sucio}
+            guardando={guardando}
+            alGuardar={guardarTrabajo}
+          />
+          <PanelLiquidacion
+            orden={orden}
+            alActualizar={(actualizada, mensaje) => {
+              // Conserva lo escrito y no guardado en diagnóstico y trabajo realizado.
+              setOrden(actualizada)
+              setAviso({ tipo: 'exito', texto: mensaje })
+            }}
+            alError={(texto) => setAviso({ tipo: 'error', texto })}
+          />
+        </div>
       </div>
 
       <h2 className="text-lg font-semibold">Historial</h2>

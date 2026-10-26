@@ -66,6 +66,8 @@ export const api = {
   get: (ruta) => solicitar('GET', ruta),
   post: (ruta, cuerpo) => solicitar('POST', ruta, cuerpo),
   patch: (ruta, cuerpo) => solicitar('PATCH', ruta, cuerpo),
+  // También lleva cuerpo JSON: la API exige JSON en toda modificación (defensa CSRF).
+  borrar: (ruta) => solicitar('DELETE', ruta),
 }
 
 /** Arma "/ruta?a=1&b=2" omitiendo los parámetros vacíos; URLSearchParams escapa los valores. */

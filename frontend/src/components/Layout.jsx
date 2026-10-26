@@ -12,6 +12,7 @@ const MENU = [
   { a: '/ordenes', etiqueta: 'Mis órdenes', icono: 'orden', roles: [ROLES.MECANICO] },
   { a: '/clientes', etiqueta: 'Clientes', icono: 'cliente', roles: Object.values(ROLES) },
   { a: '/vehiculos', etiqueta: 'Vehículos', icono: 'carro', roles: Object.values(ROLES) },
+  { a: '/inventario', etiqueta: 'Inventario', icono: 'caja', roles: Object.values(ROLES) },
   { a: '/usuarios', etiqueta: 'Usuarios', icono: 'usuarios', roles: [ROLES.ADMIN] },
 ]
 

@@ -94,7 +94,19 @@ Los crea `semilla_demo`. La clave de todos es `demo12345`.
 También crea clientes, carros y órdenes ficticias en distintos estados (recibida sin
 mecánico, en diagnóstico, esperando repuestos y entregada). Los dos talleres tienen un carro con la placa
 `ABC123` a propósito: buscarla desde cada taller sirve para comprobar el aislamiento.
-La semilla se puede volver a ejecutar sin duplicar datos.
+
+Cada taller recibe además un inventario de repuestos, con uno por debajo del mínimo y uno
+agotado para que se vean las alertas, y las órdenes llevan mano de obra y repuestos con su
+liquidación. El código `W712` existe en los dos talleres a propósito: cada uno tiene su catálogo.
+
+La semilla se puede volver a ejecutar sin duplicar datos. En una base cargada antes de la
+Semana 4, completa con mano de obra y repuestos las órdenes de demostración que sigan abiertas.
+
+### Seguimiento del cliente
+
+Cada orden tiene un enlace público, visible en su detalle para recepción y el administrador:
+`http://localhost:5173/seguimiento/<código>`. Se abre sin iniciar sesión y muestra el estado
+del carro y lo que se cobra, sin datos personales.
 
 ## Comandos
 

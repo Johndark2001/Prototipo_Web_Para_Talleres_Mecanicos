@@ -12,6 +12,8 @@ from app.models import (
     AsignacionOrden,
     EstadoOrden,
     HistorialEstadoOrden,
+    OrdenRepuesto,
+    OrdenServicio,
     OrdenTrabajo,
     RolUsuario,
     Taller,
@@ -19,6 +21,7 @@ from app.models import (
     Vehiculo,
 )
 from app.schemas.ordenes import AsignacionCrear, CambioEstado, OrdenActualizar, OrdenCrear
+from app.services import inventario as servicio_inventario
 from app.services import usuarios as servicio_usuarios
 from app.services import vehiculos as servicio_vehiculos
 from app.services.flujo_orden import transicion_existe, transiciones_posibles
@@ -94,6 +97,10 @@ def obtener(db: Session, actual: Usuario, orden_id: int) -> OrdenTrabajo:
             selectinload(OrdenTrabajo.asignaciones).options(
                 joinedload(AsignacionOrden.mecanico), joinedload(AsignacionOrden.asignador)
             ),
+            selectinload(OrdenTrabajo.servicios).joinedload(OrdenServicio.registrador),
+            selectinload(OrdenTrabajo.repuestos).options(
+                joinedload(OrdenRepuesto.repuesto), joinedload(OrdenRepuesto.registrador)
+            ),
         )
         .where(OrdenTrabajo.id == orden_id, *_visibles(actual))
         # Tras un cambio, vuelve a leer el historial aunque la orden ya esté en la sesión.
@@ -104,7 +111,7 @@ def obtener(db: Session, actual: Usuario, orden_id: int) -> OrdenTrabajo:
     return orden
 
 
-def _obtener_bloqueada(db: Session, actual: Usuario, orden_id: int) -> OrdenTrabajo:
+def obtener_bloqueada(db: Session, actual: Usuario, orden_id: int) -> OrdenTrabajo:
     """Bloquea la fila: dos cambios simultáneos no pueden partir del mismo estado.
 
     El bloqueo va en una consulta aparte porque PostgreSQL no admite FOR UPDATE sobre los
@@ -146,7 +153,7 @@ def permisos(actual: Usuario, orden: OrdenTrabajo) -> dict:
     }
 
 
-def _exigir_abierta(orden: OrdenTrabajo) -> None:
+def exigir_abierta(orden: OrdenTrabajo) -> None:
     if orden.estado in ESTADOS_FINALES:  # RN-07
         estado = "entregada" if orden.estado == EstadoOrden.ENTREGADO else "cancelada"
         raise Conflicto(f"La orden #{orden.numero} ya fue {estado} y no se puede modificar")
@@ -227,8 +234,8 @@ def crear(db: Session, actual: Usuario, datos: OrdenCrear) -> OrdenTrabajo:
 
 
 def actualizar(db: Session, actual: Usuario, orden_id: int, datos: OrdenActualizar) -> OrdenTrabajo:
-    orden = _obtener_bloqueada(db, actual, orden_id)
-    _exigir_abierta(orden)
+    orden = obtener_bloqueada(db, actual, orden_id)
+    exigir_abierta(orden)
     cambios = datos.model_dump(exclude_unset=True)
     if actual.rol == RolUsuario.MECANICO and set(cambios) - CAMPOS_DEL_MECANICO:
         raise SinPermiso("El mecánico solo registra el diagnóstico y el trabajo realizado")
@@ -242,8 +249,8 @@ def actualizar(db: Session, actual: Usuario, orden_id: int, datos: OrdenActualiz
 def cambiar_estado(
     db: Session, actual: Usuario, orden_id: int, datos: CambioEstado
 ) -> OrdenTrabajo:
-    orden = _obtener_bloqueada(db, actual, orden_id)
-    _exigir_abierta(orden)
+    orden = obtener_bloqueada(db, actual, orden_id)
+    exigir_abierta(orden)
     destino = datos.estado
     if destino == orden.estado:
         raise Conflicto(f"La orden ya está en «{NOMBRES_ESTADO[destino]}»")
@@ -283,6 +290,18 @@ def cambiar_estado(
         orden.fecha_entrega = datetime.now(UTC)
     if destino == EstadoOrden.CANCELADA:
         orden.motivo_cancelacion = datos.nota  # RN-18
+        # RN-03: los repuestos vuelven al estante. Las líneas se conservan como historia de la
+        # orden; los movimientos DEVOLUCION explican el stock. Se bloquean en orden de id para
+        # que dos cancelaciones simultáneas no se esperen mutuamente.
+        for linea in sorted(orden.repuestos, key=lambda linea: linea.repuesto_id):
+            servicio_inventario.devolver_a_stock(
+                db,
+                actual,
+                linea.repuesto_id,
+                linea.cantidad,
+                orden,
+                nota=f"Orden #{orden.numero} cancelada",
+            )
     orden.historial.append(  # RN-01
         HistorialEstadoOrden(
             estado_anterior=anterior,
@@ -296,8 +315,8 @@ def cambiar_estado(
 
 
 def asignar(db: Session, actual: Usuario, orden_id: int, datos: AsignacionCrear) -> OrdenTrabajo:
-    orden = _obtener_bloqueada(db, actual, orden_id)
-    _exigir_abierta(orden)
+    orden = obtener_bloqueada(db, actual, orden_id)
+    exigir_abierta(orden)
     mecanico = _mecanico_valido(db, actual, datos.mecanico_id)
     if mecanico.id == orden.mecanico_id:
         raise DatosInvalidos("mecanico_id", f"La orden ya está asignada a {mecanico.nombre}")

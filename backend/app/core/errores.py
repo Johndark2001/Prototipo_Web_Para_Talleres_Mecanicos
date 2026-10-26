@@ -51,6 +51,11 @@ class Conflicto(ErrorAplicacion):
     code = "CONFLICTO"
 
 
+class DemasiadasSolicitudes(ErrorAplicacion):
+    status_code = 429
+    code = "DEMASIADAS_SOLICITUDES"
+
+
 class ServicioNoDisponible(ErrorAplicacion):
     status_code = 503
     code = "SERVICIO_NO_DISPONIBLE"
@@ -91,6 +96,14 @@ def _mensaje_validacion(error: dict) -> str:
         return f"Debe ser menor o igual a {contexto.get('le')}"
     if tipo in ("int_parsing", "int_type", "int_from_float"):
         return "Debe ser un número entero"
+    if tipo == "greater_than":
+        return f"Debe ser mayor que {contexto.get('gt')}"
+    if tipo in ("decimal_parsing", "decimal_type"):
+        return "Debe ser un número"
+    if tipo == "decimal_max_places":
+        return f"Use máximo {contexto.get('decimal_places')} decimales"
+    if tipo in ("decimal_max_digits", "decimal_whole_digits"):
+        return "El número es demasiado grande"
     return "Valor no válido"
 
 

@@ -4,7 +4,18 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth, clientes, mecanicos, ordenes, salud, usuarios, vehiculos
+from app.api import (
+    auth,
+    clientes,
+    dashboard,
+    mecanicos,
+    ordenes,
+    repuestos,
+    salud,
+    seguimiento,
+    usuarios,
+    vehiculos,
+)
 from app.core.errores import NoEncontrado, cuerpo_error, registrar_manejadores
 
 # En producción el backend sirve la interfaz compilada desde el mismo dominio (ADR-001).
@@ -61,6 +72,9 @@ def crear_app() -> FastAPI:
     api.include_router(vehiculos.router)
     api.include_router(ordenes.router)
     api.include_router(mecanicos.router)
+    api.include_router(repuestos.router)
+    api.include_router(dashboard.router)
+    api.include_router(seguimiento.router)
     app.include_router(api)
 
     montar_frontend(app, DIRECTORIO_FRONTEND)

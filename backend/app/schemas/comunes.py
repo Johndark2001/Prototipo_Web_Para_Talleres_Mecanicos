@@ -1,7 +1,8 @@
+from decimal import Decimal
 from math import ceil
 from typing import Annotated, Any
 
-from pydantic import BaseModel, BeforeValidator, StringConstraints
+from pydantic import BaseModel, BeforeValidator, Field, StringConstraints
 from pydantic_core import PydanticCustomError
 
 from app.core.errores import TIPO_ERROR_PROPIO
@@ -9,6 +10,11 @@ from app.core.errores import TIPO_ERROR_PROPIO
 Nombre = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=120)]
 # Límite superior para evitar que un texto enorme consuma CPU al calcular el hash.
 Clave = Annotated[str, StringConstraints(min_length=8, max_length=128)]
+# Pesos colombianos y cantidades con decimales exactos (RN-19). Los límites siguen las
+# columnas NUMERIC(12,2) y NUMERIC(10,2) de la base de datos.
+Precio = Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2)]
+Cantidad = Annotated[Decimal, Field(gt=0, max_digits=10, decimal_places=2)]
+Existencia = Annotated[Decimal, Field(ge=0, max_digits=10, decimal_places=2)]
 
 
 def error_campo(mensaje: str) -> PydanticCustomError:

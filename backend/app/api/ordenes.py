@@ -8,11 +8,14 @@ from app.schemas.comunes import Pagina, Paginacion
 from app.schemas.ordenes import (
     AsignacionCrear,
     CambioEstado,
+    LineaRepuestoCrear,
+    LineaServicioCrear,
     OrdenActualizar,
     OrdenCrear,
     OrdenDetalle,
     OrdenResumen,
 )
+from app.services import lineas_orden, liquidacion
 from app.services import ordenes as servicio
 
 router = APIRouter(prefix="/ordenes", tags=["ordenes"])
@@ -22,7 +25,9 @@ def _detalle(actual: Usuario, orden: OrdenTrabajo) -> OrdenDetalle:
     datos = {
         campo: getattr(orden, campo) for campo in OrdenDetalle.model_fields if hasattr(orden, campo)
     }
-    return OrdenDetalle.model_validate({**datos, **servicio.permisos(actual, orden)})
+    return OrdenDetalle.model_validate(
+        {**datos, "liquidacion": liquidacion.calcular(orden), **servicio.permisos(actual, orden)}
+    )
 
 
 @router.get("", response_model=Pagina[OrdenResumen])
@@ -84,3 +89,34 @@ def asignar_mecanico(
 ) -> OrdenDetalle:
     """Asigna o reasigna el mecánico; cada cambio queda registrado (RN-14)."""
     return _detalle(actual, servicio.asignar(db, actual, orden_id, datos))
+
+
+@router.post(
+    "/{orden_id}/servicios", response_model=OrdenDetalle, status_code=status.HTTP_201_CREATED
+)
+def agregar_servicio(
+    orden_id: int, datos: LineaServicioCrear, actual: UsuarioActual, db: DB
+) -> OrdenDetalle:
+    """Mano de obra en texto libre (RF-12)."""
+    return _detalle(actual, lineas_orden.agregar_servicio(db, actual, orden_id, datos))
+
+
+@router.delete("/{orden_id}/servicios/{linea_id}", response_model=OrdenDetalle)
+def quitar_servicio(orden_id: int, linea_id: int, actual: UsuarioActual, db: DB) -> OrdenDetalle:
+    return _detalle(actual, lineas_orden.quitar_servicio(db, actual, orden_id, linea_id))
+
+
+@router.post(
+    "/{orden_id}/repuestos", response_model=OrdenDetalle, status_code=status.HTTP_201_CREATED
+)
+def agregar_repuesto(
+    orden_id: int, datos: LineaRepuestoCrear, actual: UsuarioActual, db: DB
+) -> OrdenDetalle:
+    """Descuenta el stock en la misma operación; si no alcanza responde 409 (RF-09, RN-02)."""
+    return _detalle(actual, lineas_orden.agregar_repuesto(db, actual, orden_id, datos))
+
+
+@router.delete("/{orden_id}/repuestos/{linea_id}", response_model=OrdenDetalle)
+def quitar_repuesto(orden_id: int, linea_id: int, actual: UsuarioActual, db: DB) -> OrdenDetalle:
+    """El repuesto vuelve al stock con un movimiento DEVOLUCION (RN-03)."""
+    return _detalle(actual, lineas_orden.quitar_repuesto(db, actual, orden_id, linea_id))

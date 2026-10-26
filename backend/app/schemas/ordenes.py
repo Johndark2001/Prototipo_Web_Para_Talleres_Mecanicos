@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Annotated
 
 from pydantic import (
@@ -12,7 +13,14 @@ from pydantic import (
 )
 
 from app.models import EstadoOrden
-from app.schemas.comunes import error_campo, rechazar_nulo, texto_opcional, vacio_a_nulo
+from app.schemas.comunes import (
+    Cantidad,
+    Precio,
+    error_campo,
+    rechazar_nulo,
+    texto_opcional,
+    vacio_a_nulo,
+)
 from app.schemas.vehiculos import Propietario, VehiculoResumen
 from app.services.flujo_orden import TipoTransicion
 
@@ -70,6 +78,26 @@ class AsignacionCrear(BaseModel):
     nota: Nota = None
 
 
+DescripcionServicio = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=2, max_length=200)
+]
+
+
+class LineaServicioCrear(BaseModel):
+    """Mano de obra en texto libre (el catálogo RF-18 está aplazado, SPEC §17.1)."""
+
+    descripcion: DescripcionServicio
+    cantidad: Cantidad = Decimal(1)
+    precio_unitario: Precio
+
+
+class LineaRepuestoCrear(BaseModel):
+    """El precio no se envía: se copia del catálogo al registrar la línea (RN-05)."""
+
+    repuesto_id: int
+    cantidad: Cantidad
+
+
 class UsuarioResumen(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -123,6 +151,47 @@ class OrdenResumen(BaseModel):
     mecanico: UsuarioResumen | None
 
 
+class RepuestoReferencia(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    codigo: str
+    nombre: str
+    unidad: str
+
+
+class LineaServicioSalida(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    descripcion: str
+    cantidad: Decimal
+    precio_unitario: Decimal
+    subtotal: Decimal
+    registrador: UsuarioResumen
+    creado_en: datetime
+
+
+class LineaRepuestoSalida(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    repuesto: RepuestoReferencia
+    cantidad: Decimal
+    precio_unitario: Decimal
+    subtotal: Decimal
+    registrador: UsuarioResumen
+    creado_en: datetime
+
+
+class Liquidacion(BaseModel):
+    """RN-06: la calcula siempre el servidor a partir de las líneas. Sin IVA (P-9)."""
+
+    mano_de_obra: Decimal
+    repuestos: Decimal
+    total: Decimal
+
+
 class OrdenDetalle(OrdenResumen):
     diagnostico: str | None
     trabajo_realizado: str | None
@@ -131,6 +200,9 @@ class OrdenDetalle(OrdenResumen):
     creador: UsuarioResumen
     historial: list[HistorialSalida]
     asignaciones: list[AsignacionSalida]
+    servicios: list[LineaServicioSalida]
+    repuestos: list[LineaRepuestoSalida]
+    liquidacion: Liquidacion
     transiciones: list[TransicionSalida]
     puede_editar_trabajo: bool
     puede_editar_recepcion: bool

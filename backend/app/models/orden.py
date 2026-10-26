@@ -1,5 +1,6 @@
 import enum
 from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import (
     BigInteger,
@@ -21,6 +22,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
 from app.models.cliente import Cliente
+from app.models.inventario import CANTIDAD, DINERO, Repuesto, Servicio
+from app.models.taller import Taller
 from app.models.usuario import Usuario
 from app.models.vehiculo import Vehiculo
 
@@ -36,6 +39,12 @@ class EstadoOrden(enum.StrEnum):
 
 ESTADOS_FINALES = frozenset({EstadoOrden.ENTREGADO, EstadoOrden.CANCELADA})
 TIPO_ESTADO_ORDEN = Enum(EstadoOrden, name="estado_orden")
+CENTAVO = Decimal("0.01")
+
+
+def subtotal_linea(cantidad: Decimal, precio_unitario: Decimal) -> Decimal:
+    """Cantidad × precio, redondeado al centavo (1,5 L × $32.333 = $48.499,50)."""
+    return (cantidad * precio_unitario).quantize(CENTAVO, rounding=ROUND_HALF_UP)
 
 
 class OrdenTrabajo(Base):
@@ -98,6 +107,7 @@ class OrdenTrabajo(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    taller: Mapped[Taller] = relationship()
     vehiculo: Mapped[Vehiculo] = relationship()
     cliente: Mapped[Cliente] = relationship()
     mecanico: Mapped[Usuario | None] = relationship(foreign_keys=[mecanico_id])
@@ -108,6 +118,8 @@ class OrdenTrabajo(Base):
     asignaciones: Mapped[list["AsignacionOrden"]] = relationship(
         order_by="[AsignacionOrden.fecha, AsignacionOrden.id]"
     )
+    servicios: Mapped[list["OrdenServicio"]] = relationship(order_by="OrdenServicio.id")
+    repuestos: Mapped[list["OrdenRepuesto"]] = relationship(order_by="OrdenRepuesto.id")
 
     @property
     def abierta(self) -> bool:
@@ -159,3 +171,66 @@ class AsignacionOrden(Base):
 
     mecanico: Mapped[Usuario] = relationship(foreign_keys=[mecanico_id])
     asignador: Mapped[Usuario] = relationship(foreign_keys=[asignado_por])
+
+
+class OrdenServicio(Base):
+    """Línea de mano de obra. Sin catálogo en el MVP: `servicio_id` queda nulo (RF-18)."""
+
+    __tablename__ = "orden_servicio"
+    __table_args__ = (
+        CheckConstraint("cantidad > 0", name="cantidad_positiva"),
+        CheckConstraint("precio_unitario >= 0", name="precio_no_negativo"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    orden_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("orden_trabajo.id", ondelete="RESTRICT"), index=True
+    )
+    servicio_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("servicio.id", ondelete="RESTRICT")
+    )
+    descripcion: Mapped[str] = mapped_column(String(200))
+    cantidad: Mapped[Decimal] = mapped_column(CANTIDAD)
+    precio_unitario: Mapped[Decimal] = mapped_column(DINERO)
+    registrado_por: Mapped[int] = mapped_column(  # RN-15
+        BigInteger, ForeignKey("usuario.id", ondelete="RESTRICT")
+    )
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    servicio: Mapped[Servicio | None] = relationship()
+    registrador: Mapped[Usuario] = relationship()
+
+    @property
+    def subtotal(self) -> Decimal:
+        return subtotal_linea(self.cantidad, self.precio_unitario)
+
+
+class OrdenRepuesto(Base):
+    """Repuesto consumido. El precio es una copia del catálogo al registrarlo (RN-05)."""
+
+    __tablename__ = "orden_repuesto"
+    __table_args__ = (
+        CheckConstraint("cantidad > 0", name="cantidad_positiva"),
+        CheckConstraint("precio_unitario >= 0", name="precio_no_negativo"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    orden_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("orden_trabajo.id", ondelete="RESTRICT"), index=True
+    )
+    repuesto_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("repuesto.id", ondelete="RESTRICT"), index=True
+    )
+    cantidad: Mapped[Decimal] = mapped_column(CANTIDAD)
+    precio_unitario: Mapped[Decimal] = mapped_column(DINERO)
+    registrado_por: Mapped[int] = mapped_column(  # RN-15
+        BigInteger, ForeignKey("usuario.id", ondelete="RESTRICT")
+    )
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    repuesto: Mapped[Repuesto] = relationship()
+    registrador: Mapped[Usuario] = relationship()
+
+    @property
+    def subtotal(self) -> Decimal:
+        return subtotal_linea(self.cantidad, self.precio_unitario)

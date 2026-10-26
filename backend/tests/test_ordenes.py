@@ -3,69 +3,14 @@ from datetime import date, timedelta
 import pytest
 
 from app.models import RolUsuario
-from tests.conftest import iniciar_sesion
-
-ADMIN, RECEPCION, MECANICO, OTRO_MECANICO = (
-    "admin@a.co",
-    "recepcion@a.co",
-    "mecanico@a.co",
-    "otro.mecanico@a.co",
+from tests.conftest import (
+    ADMIN,
+    MECANICO,
+    OTRO_MECANICO,
+    RECEPCION,
+    cambiar,
+    codigo_error,
 )
-
-
-@pytest.fixture
-def equipo(taller_a, crear_usuario):
-    return {
-        "admin": crear_usuario(taller_a, ADMIN),
-        "recepcion": crear_usuario(taller_a, RECEPCION, rol=RolUsuario.RECEPCION),
-        "mecanico": crear_usuario(taller_a, MECANICO, rol=RolUsuario.MECANICO),
-        "otro": crear_usuario(taller_a, OTRO_MECANICO, rol=RolUsuario.MECANICO),
-    }
-
-
-@pytest.fixture
-def ana(taller_a, crear_cliente):
-    return crear_cliente(taller_a, "Ana Gómez")
-
-
-@pytest.fixture
-def carro(ana, crear_vehiculo):
-    return crear_vehiculo(ana, "ABC123")
-
-
-@pytest.fixture
-def como(cliente):
-    """Cambia la sesión del cliente HTTP al usuario indicado."""
-
-    def _como(email: str):
-        assert iniciar_sesion(cliente, email).status_code == 200
-        return cliente
-
-    return _como
-
-
-@pytest.fixture
-def abrir_orden(como, equipo, carro):
-    def _abrir(vehiculo=carro, con_mecanico=True, **campos):
-        cuerpo = {"vehiculo_id": vehiculo.id, "motivo_ingreso": "Ruido en la suspensión", **campos}
-        if con_mecanico:
-            cuerpo["mecanico_id"] = equipo["mecanico"].id
-        respuesta = como(RECEPCION).post("/api/v1/ordenes", json=cuerpo)
-        assert respuesta.status_code == 201, respuesta.text
-        return respuesta.json()
-
-    return _abrir
-
-
-def cambiar(cliente, orden, estado, nota=None):
-    return cliente.post(
-        f"/api/v1/ordenes/{orden['id']}/historial", json={"estado": estado, "nota": nota}
-    )
-
-
-def codigo_error(respuesta) -> str:
-    return respuesta.json()["error"]["code"]
-
 
 # --- Recepción (RF-05) -------------------------------------------------------------------
 

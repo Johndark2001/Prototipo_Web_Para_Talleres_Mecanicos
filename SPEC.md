@@ -543,7 +543,7 @@ La fecha exacta de sustentación no está confirmada.
 
 | Bloque | Contenido |
 |---|---|
-| Semana 5 | Reportes RF-15, con prioridad en R2 porque es la evidencia de la tesis. Dashboard completo. Seguridad: límite de solicitudes, cabeceras y auditoría de dependencias. Completar RNF-09. Anonimización del cliente (RN-11, RNF-06; decisión S2-5). |
+| Semana 5 | Despliegue básico en Render y Neon con HTTPS (decisión S4-8), con el límite de consultas por IP ajustado al proxy del hosting. Reportes RF-15, con prioridad en R2 porque es la evidencia de la tesis. Dashboard completo. Seguridad: límite de solicitudes, cabeceras y auditoría de dependencias. Completar RNF-09. Anonimización del cliente (RN-11, RNF-06; decisión S2-5). |
 | Semana 6 | Manual (RF-21). Funciones *Should* si hay tiempo. Preparar los instrumentos del piloto. |
 | Semana 7 en adelante | Piloto con datos reales y autorización (H-5): medir primero el proceso en papel, capacitar y aplicar el cuestionario de usabilidad. Ajustar los capítulos de la tesis (H-3). |
 
@@ -608,7 +608,7 @@ P/I = probabilidad / impacto.
 
 ### 19.1 MVP de 4 semanas (22/11/2026)
 
-1. El flujo completo (cliente → vehículo → orden → asignación → estados → inventario → liquidación → seguimiento) funciona en la URL pública con HTTPS desde un celular de 360 px.
+1. El flujo completo (cliente → vehículo → orden → asignación → estados → inventario → liquidación → seguimiento) funciona desde un celular de 360 px. Por la decisión S4-8, el MVP se validó en el entorno local; la URL pública con HTTPS se cumple en la Semana 5.
 2. RF-01 a RF-14 funcionan, con RF-14 en su versión mínima.
 3. Las pruebas críticas de §17.1 pasan.
 4. Solo hay datos ficticios cargados.
@@ -703,6 +703,22 @@ La Fase 1 (semana 1 de §17.1) **solo empieza con la autorización expresa del a
 | S3-5 | Al reasignar una orden, el mecánico anterior deja de verla: el mecánico solo ve las órdenes asignadas a él (§3). |
 | S3-6 | Existe un listado de mecánicos activos con sus órdenes abiertas (`/api/v1/mecanicos`) para ADMIN y RECEPCION, que lo necesita para asignar y no tiene acceso a la gestión de usuarios. |
 | S3-7 | La mano de obra y los repuestos de la orden se registran en la Semana 4, junto con la liquidación (§17.1). |
+
+### 21.6 Decisiones de la Semana 4 (aprobadas por el autor el 26/10/2026)
+
+| ID | Decisión |
+|---|---|
+| S4-1 | El ajuste de inventario se registra con la cantidad contada en el estante: el sistema calcula la diferencia y la guarda como movimiento `AJUSTE`. El motivo es obligatorio. |
+| S4-2 | Al cancelar una orden, sus líneas de mano de obra y repuestos se conservan como historia y el stock de los repuestos vuelve con movimientos `DEVOLUCION` (RN-03). La orden indica que no se cobra y la página pública no muestra cobro. |
+| S4-3 | En la interfaz los precios se escriben en pesos enteros, con el punto como separador de miles ("35.000"). La base de datos admite centavos (RN-19). |
+| S4-4 | Todos los roles consultan la lista del inventario. Solo el ADMIN entra al detalle de un repuesto, lo crea o edita, registra entradas y ajustes y ve sus movimientos (§3). |
+| S4-5 | El dashboard (`/api/v1/dashboard`) es para ADMIN y RECEPCION. El mecánico conserva su vista "Mis órdenes" (§3). |
+| S4-6 | El enlace de seguimiento muestra la descripción de la mano de obra tal como la escribe el taller, que no debe incluir datos personales. Admite 30 consultas por minuto por IP y no vence mientras exista la orden (ADR-005). |
+| S4-7 | RF-19 (historial completo en el enlace del cliente) y RF-20 (botón de WhatsApp) quedan aplazados. El enlace se copia desde el detalle de la orden. |
+| S4-8 | El despliegue básico pasa a la Semana 5 (§17.2), como prevé el recorte 4 de §17.1. Requiere cuentas del autor en Render y Neon y ajustar el límite de consultas por IP detrás del proxy del hosting. No bloquea la aprobación de la Semana 4. |
+| S4-9 | La tabla `servicio` (catálogo de mano de obra) existe vacía y sin API porque `orden_servicio` la referencia. RF-18 sigue aplazado: la mano de obra se escribe como texto libre. |
+
+**Semana 4 APROBADA el 26/10/2026.** El MVP funcional quedó validado por el autor. La Semana 5 solo empieza con su autorización expresa.
 
 ---
 

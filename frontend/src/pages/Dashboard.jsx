@@ -1,12 +1,12 @@
 import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import Icono from '../components/Icono.jsx'
 import ListaOrdenes from '../components/ListaOrdenes.jsx'
+import ResumenTaller from '../components/ResumenTaller.jsx'
 import { ROLES } from '../constantes.js'
 import { useSesion } from '../sesion/contexto.js'
 
-// Semana 3: el inicio muestra las órdenes abiertas; para el mecánico es su vista
-// "Mis órdenes" (SPEC §3). En la semana 4 se agregan los conteos por estado y las
-// alertas de stock (RF-14 mínimo).
+// El inicio muestra el resumen del taller (RF-14 mínimo: conteos por estado y alertas de
+// stock) y las órdenes abiertas. Para el mecánico es su vista "Mis órdenes" (SPEC §3).
 export default function Dashboard() {
   const { sesion } = useSesion()
   const { usuario, taller } = sesion
@@ -26,6 +26,8 @@ export default function Dashboard() {
           </EnlaceBoton>
         )}
       </div>
+
+      {!esMecanico && <ResumenTaller />}
 
       <section aria-labelledby="titulo-abiertas" className="flex flex-col gap-3">
         <h2 id="titulo-abiertas" className="text-lg font-semibold">
