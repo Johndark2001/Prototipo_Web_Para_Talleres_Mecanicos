@@ -8,6 +8,7 @@ Proyecto de grado de Ingeniería de Software, Corporación Universitaria Iberoam
 - **Decisiones técnicas:** [docs/decisions/](docs/decisions/)
 - **Modelo de datos:** [docs/modelo-datos.md](docs/modelo-datos.md)
 - **Documentación para la sustentación:** [docs/sustentacion/](docs/sustentacion/README.md) (manuales, informe, guiones y matriz de requisitos)
+- **Historial de versiones:** [docs/historial-commits.md](docs/historial-commits.md) (hitos del desarrollo y última versión estable)
 
 ## Tecnologías
 
