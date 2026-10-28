@@ -108,6 +108,7 @@ En un taller sin recepcionista, el usuario `ADMIN` hace también las tareas de r
 |---|---|---|---|
 | Gestionar los usuarios del taller | ✓ | — | — |
 | Crear y editar clientes y vehículos | ✓ | ✓ | solo ver |
+| Anonimizar un cliente (RN-11) | ✓ | — | — |
 | Abrir una orden (recepción) y asignar o reasignar mecánico | ✓ | ✓ | — |
 | Ver órdenes | todas | todas | solo las asignadas a él |
 | Registrar diagnóstico, trabajo, servicios y repuestos | ✓ | ✓ | solo en sus órdenes |
@@ -169,7 +170,7 @@ Las funciones *Could* (RF-22 a RF-26) no tienen modelo de datos en esta versión
 | RNF-03 | Rendimiento | Los listados responden en menos de 2 s con conexión 4G, con hasta 5.000 órdenes por taller y páginas de 20 |
 | RNF-04 | Seguridad | Contraseñas con hash argon2id, HTTPS, sesión en cookie httpOnly y permisos verificados en cada solicitud (ADR-005) |
 | RNF-05 | Aislamiento entre talleres | Un usuario nunca lee ni modifica datos de otro taller. Cada recurso tiene una prueba automatizada que lo comprueba (ADR-006). |
-| RNF-06 | Ley 1581 | La autorización de datos queda registrada con fecha, se piden solo los datos personales necesarios y existe la anonimización |
+| RNF-06 | Ley 1581 | La autorización de datos queda registrada con fecha, se piden solo los datos personales necesarios y existe la anonimización del cliente, solo para el ADMIN, con confirmación escrita y registro de quién y cuándo la hizo (RN-11; decisiones A-1 a A-7) |
 | RNF-07 | Accesibilidad | Contraste nivel AA, uso con teclado, etiquetas en los formularios y el estado nunca se indica solo con color |
 | RNF-08 | Lenguaje | Vocabulario del taller: "placa", "carro", "repuesto", "mano de obra", "entregar" |
 | RNF-09 | Mantenibilidad | Cada regla de negocio de §6 tiene al menos una prueba automatizada |
@@ -192,7 +193,7 @@ Las funciones *Could* (RF-22 a RF-26) no tienen modelo de datos en esta versión
 | RN-08 | Un vehículo tiene como máximo una orden abierta, es decir, en un estado distinto de `ENTREGADO` y `CANCELADA`. |
 | RN-09 | Toda lectura y escritura se limita al `taller_id` del usuario que inició sesión. Si se pide un recurso de otro taller, la respuesta es "no encontrado" (ADR-006). |
 | RN-10 | No se registra un cliente sin su autorización de tratamiento de datos (`autoriza_datos = verdadero`, con fecha). |
-| RN-11 | Las órdenes, el historial de estados, las asignaciones y los movimientos de inventario **nunca se borran**. Clientes, vehículos, repuestos, servicios y usuarios se **desactivan**. Si un cliente pide que se eliminen sus datos, sus datos personales se **anonimizan** y la historia operativa se conserva. |
+| RN-11 | Las órdenes, el historial de estados, las asignaciones y los movimientos de inventario **nunca se borran**. Clientes, vehículos, repuestos, servicios y usuarios se **desactivan**. Si un cliente pide que se eliminen sus datos, sus datos personales se **anonimizan** y la historia operativa se conserva: el ADMIN borra nombre, teléfono, correo y documento, el cliente queda inactivo y no se puede editar ni reactivar, y queda registrado quién lo anonimizó y cuándo. No se anonimiza un cliente con órdenes abiertas (decisiones A-1 a A-7). |
 | RN-12 | El número de orden es un consecutivo por taller que se asigna dentro de una transacción. El `codigo_seguimiento` es aleatorio, de al menos 128 bits, único e imposible de adivinar. |
 | RN-13 | Para pasar de `RECIBIDO` a `EN_DIAGNOSTICO`, la orden debe tener un mecánico asignado. |
 | RN-14 | Cada asignación o reasignación de mecánico inserta un registro en `asignacion_orden` (P-7). |
@@ -309,6 +310,7 @@ Los endpoints concretos se definen y documentan en cada fase, mediante la docume
   - sin autenticación y con límite de solicitudes;
   - muestra el nombre del taller, el número de orden, la placa enmascarada, marca y modelo, el estado, la línea de tiempo y la liquidación;
   - nunca muestra documento, teléfono ni correo.
+- **Anonimización del cliente:** `POST /api/v1/clientes/{id}/anonimizar`, solo para el ADMIN, con el cuerpo `{"confirmacion": "ANONIMIZAR"}`. Sin la palabra responde 422; con órdenes abiertas o si ya está anonimizado, 409. La respuesta del cliente incluye `anonimizado`, `anonimizado_en` y, en el detalle, `anonimizador` (decisiones A-1 a A-7).
 
 ---
 
@@ -543,7 +545,7 @@ La fecha exacta de sustentación no está confirmada.
 
 | Bloque | Contenido |
 |---|---|
-| Semana 5 | Despliegue básico en Render y Neon con HTTPS (decisión S4-8), con el límite de consultas por IP ajustado al proxy del hosting. Reportes RF-15, con prioridad en R2 porque es la evidencia de la tesis. Dashboard completo. Seguridad: límite de solicitudes, cabeceras y auditoría de dependencias. Completar RNF-09. Anonimización del cliente (RN-11, RNF-06; decisión S2-5). |
+| Semana 5 | Despliegue básico en Render y Neon con HTTPS (decisión S4-8), con el límite de consultas por IP ajustado al proxy del hosting. Reportes RF-15, con prioridad en R2 porque es la evidencia de la tesis. Dashboard completo. Seguridad: límite de solicitudes, cabeceras y auditoría de dependencias. Completar RNF-09. La anonimización del cliente (decisión S2-5) quedó implementada antes de la Semana 5 (§21.7). |
 | Semana 6 | Manual (RF-21). Funciones *Should* si hay tiempo. Preparar los instrumentos del piloto. |
 | Semana 7 en adelante | Piloto con datos reales y autorización (H-5): medir primero el proceso en papel, capacitar y aplicar el cuestionario de usabilidad. Ajustar los capítulos de la tesis (H-3). |
 
@@ -643,7 +645,7 @@ P/I = probabilidad / impacto.
 | Notificaciones al cliente | D1 §1.3 | RF-20 (envío manual) | — | — | — | ✓ (la limitación está declarada) |
 | Asignación de técnicos | D1 Cap. 1 | RF-07 | — | `mecanico_id` y `asignacion_orden` | — | ✓ |
 | Medición de tiempos de respuesta | D1 §1.1 (pregunta), §7.3 | RF-15 (R2) | — | `historial_estado_orden` | — | ✓ |
-| Ley 1581 | D1 §3.6 | RF-03, RNF-06 | — | `autoriza_datos` y anonimización | 005 | ✓ (datos ficticios hasta el piloto, H-5) |
+| Ley 1581 | D1 §3.6 | RF-03, RNF-06 | — | `autoriza_datos` y anonimización (A-1 a A-7) | 005 | ✓ (datos ficticios hasta el piloto, H-5) |
 | Usabilidad en talleres informales | D1 Tabla 2; D2 | RF-17, RNF-01, RNF-08 | — | — | 004 | ✓ |
 | Equipo de desarrollo | El consentimiento de D1 nombra **3 investigadores** | P-1: **un desarrollador** | — | — | — | ⚠ Aclarar en la tesis (H-3) |
 | Talleres del piloto | D1 §3.3.4 habla de los talleres participantes (10) | Criterio de éxito 6: mínimo 3 | — | — | — | ⚠ Se corrige más adelante en la tesis (H-3) |
@@ -690,7 +692,7 @@ La Fase 1 (semana 1 de §17.1) **solo empieza con la autorización expresa del a
 | S2-2 | El teléfono tiene de 7 a 15 dígitos, con un `+` inicial opcional. Se guarda sin espacios, guiones, puntos ni paréntesis. |
 | S2-3 | El documento se guarda sin espacios, puntos ni guiones y es único por taller cuando se registra. Un documento repetido responde 422, igual que una placa repetida. |
 | S2-4 | No se puede asociar un vehículo, ni al crearlo ni al cambiarle el dueño, a un cliente desactivado. |
-| S2-5 | La anonimización del cliente (RN-11, RNF-06) se aplaza hasta después del MVP funcional (§17.2). |
+| S2-5 | La anonimización del cliente (RN-11, RNF-06) se aplaza hasta después del MVP funcional (§17.2). **Implementada y aprobada el 28/10/2026** (§21.7). |
 
 ### 21.5 Decisiones de la Semana 3 (aprobadas por el autor el 25/10/2026)
 
@@ -719,6 +721,22 @@ La Fase 1 (semana 1 de §17.1) **solo empieza con la autorización expresa del a
 | S4-9 | La tabla `servicio` (catálogo de mano de obra) existe vacía y sin API porque `orden_servicio` la referencia. RF-18 sigue aplazado: la mano de obra se escribe como texto libre. |
 
 **Semana 4 APROBADA el 26/10/2026.** El MVP funcional quedó validado por el autor. La Semana 5 solo empieza con su autorización expresa.
+
+### 21.7 Decisiones de la anonimización del cliente (aprobadas por el autor el 28/10/2026)
+
+Cierra la decisión S2-5 (RN-11, RNF-06). Migración `0005`.
+
+| ID | Decisión |
+|---|---|
+| A-1 | No se anonimiza un cliente con órdenes abiertas (409). Primero se entregan o cancelan, porque el taller necesita contactarlo mientras tenga el carro. |
+| A-2 | El nombre pasa a «Cliente anonimizado N.º {id}», para distinguirlo en el historial, y el teléfono queda vacío; correo y documento quedan nulos. |
+| A-3 | La autorización de datos y su fecha se conservan como prueba de que el dato se trató con permiso (RN-10). |
+| A-4 | La anonimización es irreversible: el cliente queda inactivo y no se edita ni se reactiva. Si la persona vuelve, se registra como cliente nuevo; su documento queda libre. |
+| A-5 | Los vehículos (placa, marca y modelo) no se anonimizan: son datos del carro y sostienen el historial. Un carro con dueño anonimizado no abre órdenes (S3-3), pero se puede pasar a un dueño nuevo. |
+| A-6 | Los textos libres de las órdenes (motivo de ingreso, diagnóstico, trabajo y notas) no se modifican. Es una limitación conocida: el taller no debe escribir datos personales allí (S4-6). |
+| A-7 | La auditoría se guarda en el propio cliente (`anonimizado_en`, `anonimizado_por`), sin una tabla de auditoría general. Un CHECK de la base exige que un cliente anonimizado tenga quién y cuándo, no conserve correo ni documento y esté inactivo. |
+
+**Anonimización APROBADA el 28/10/2026** tras la validación funcional del autor. La Semana 5 y el despliegue solo empiezan con su autorización expresa.
 
 ---
 

@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
 
+import AnonimizarCliente from '../components/AnonimizarCliente.jsx'
 import Aviso from '../components/Aviso.jsx'
 import CambioActivo from '../components/CambioActivo.jsx'
 import EnlaceBoton from '../components/EnlaceBoton.jsx'
@@ -9,8 +10,8 @@ import EtiquetaActivo from '../components/EtiquetaActivo.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
 import Placa from '../components/Placa.jsx'
-import { ROLES_EDITAN_CLIENTES } from '../constantes.js'
-import { describirVehiculo, formatearFecha, formatearTelefono } from '../formato.js'
+import { ROLES, ROLES_EDITAN_CLIENTES } from '../constantes.js'
+import { describirVehiculo, formatearFecha, formatearFechaHora, formatearTelefono } from '../formato.js'
 import { useAvisoNavegacion } from '../hooks/useAvisoNavegacion.js'
 import { useConsulta } from '../hooks/useConsulta.js'
 import { useSesion } from '../sesion/contexto.js'
@@ -50,12 +51,15 @@ function ListaVehiculos({ vehiculos }) {
 export default function ClienteDetalle() {
   const { id } = useParams()
   const { sesion } = useSesion()
-  const puedeEditar = ROLES_EDITAN_CLIENTES.includes(sesion.usuario.rol)
   const { datos: cliente, error, cargando, recargar } = useConsulta(`/clientes/${id}`)
   const [aviso, setAviso] = useAvisoNavegacion()
 
   if (error) return <ErrorCarga error={error} recurso="cliente" alReintentar={recargar} />
   if (!cliente || cargando) return <Esqueleto etiqueta="Cargando cliente" />
+
+  // Un cliente anonimizado ya no se edita ni se reactiva (RN-11).
+  const puedeEditar = ROLES_EDITAN_CLIENTES.includes(sesion.usuario.rol) && !cliente.anonimizado
+  const puedeAnonimizar = sesion.usuario.rol === ROLES.ADMIN && !cliente.anonimizado
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -71,22 +75,35 @@ export default function ClienteDetalle() {
             <EtiquetaActivo activo={cliente.activo} />
           </div>
         </div>
-        {puedeEditar && (
-          <div className="flex gap-2">
-            <EnlaceBoton to={`/clientes/${cliente.id}/editar`} variante="secundario">
-              <Icono nombre="lapiz" className="size-4" />
-              Editar
-            </EnlaceBoton>
-            <CambioActivo
-              ruta={`/clientes/${cliente.id}`}
-              activo={cliente.activo}
-              nombre={cliente.nombre}
-              mensajeDesactivar="Dejará de aparecer en las búsquedas y no se le podrán asociar carros nuevos. Sus datos y carros se conservan."
-              alCambiar={(actualizado, mensaje) => {
-                setAviso(mensaje)
-                if (actualizado) recargar()
-              }}
-            />
+        {(puedeEditar || puedeAnonimizar) && (
+          <div className="flex flex-wrap gap-2">
+            {puedeEditar && (
+              <EnlaceBoton to={`/clientes/${cliente.id}/editar`} variante="secundario">
+                <Icono nombre="lapiz" className="size-4" />
+                Editar
+              </EnlaceBoton>
+            )}
+            {puedeEditar && (
+              <CambioActivo
+                ruta={`/clientes/${cliente.id}`}
+                activo={cliente.activo}
+                nombre={cliente.nombre}
+                mensajeDesactivar="Dejará de aparecer en las búsquedas y no se le podrán asociar carros nuevos. Sus datos y carros se conservan."
+                alCambiar={(actualizado, mensaje) => {
+                  setAviso(mensaje)
+                  if (actualizado) recargar()
+                }}
+              />
+            )}
+            {puedeAnonimizar && (
+              <AnonimizarCliente
+                cliente={cliente}
+                alAnonimizar={(_, mensaje) => {
+                  setAviso(mensaje)
+                  recargar()
+                }}
+              />
+            )}
           </div>
         )}
       </div>
@@ -97,11 +114,21 @@ export default function ClienteDetalle() {
         </Aviso>
       )}
 
+      {cliente.anonimizado && (
+        <Aviso tipo="info">
+          Datos personales anonimizados el {formatearFechaHora(cliente.anonimizado_en)}
+          {cliente.anonimizador && ` por ${cliente.anonimizador.nombre}`}. Sus carros y órdenes se
+          conservan.
+        </Aviso>
+      )}
+
       <dl className="grid gap-4 rounded-lg border border-borde bg-superficie p-4 sm:grid-cols-2">
         <Dato etiqueta="Teléfono">
-          <a href={`tel:${cliente.telefono}`} className="text-primario underline">
-            {formatearTelefono(cliente.telefono)}
-          </a>
+          {cliente.telefono && (
+            <a href={`tel:${cliente.telefono}`} className="text-primario underline">
+              {formatearTelefono(cliente.telefono)}
+            </a>
+          )}
         </Dato>
         <Dato etiqueta="Correo">{cliente.email}</Dato>
         <Dato etiqueta="Documento">{cliente.documento}</Dato>

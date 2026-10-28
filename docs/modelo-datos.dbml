@@ -67,6 +67,8 @@ Table cliente {
   autoriza_datos boolean [not null, note: 'CHECK autoriza_datos = true (RN-10, Ley 1581)']
   fecha_autorizacion timestamptz [not null]
   anonimizado boolean [not null, default: false, note: 'RN-11']
+  anonimizado_en timestamptz [note: 'Cuándo se anonimizó (A-7)']
+  anonimizado_por bigint [ref: > usuario.id, note: 'Quién lo anonimizó (A-7). CHECK ck_cliente_anonimizacion_coherente']
   activo boolean [not null, default: true]
   creado_en timestamptz [not null, default: `now()`]
   actualizado_en timestamptz [not null, default: `now()`]

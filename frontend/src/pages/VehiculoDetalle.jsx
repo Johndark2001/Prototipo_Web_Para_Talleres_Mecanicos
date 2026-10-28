@@ -109,9 +109,11 @@ export default function VehiculoDetalle() {
           {cliente.nombre}
           {!cliente.activo && <span className="text-sm font-normal text-texto-suave">(inactivo)</span>}
         </Link>
-        <a href={`tel:${cliente.telefono}`} className="self-start text-sm text-texto-suave underline">
-          {formatearTelefono(cliente.telefono)}
-        </a>
+        {cliente.telefono && (
+          <a href={`tel:${cliente.telefono}`} className="self-start text-sm text-texto-suave underline">
+            {formatearTelefono(cliente.telefono)}
+          </a>
+        )}
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

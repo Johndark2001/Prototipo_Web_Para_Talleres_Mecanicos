@@ -96,10 +96,14 @@ function VistaOrden({ ordenInicial }) {
             <Link to={`/clientes/${cliente.id}`} className="hover:underline">
               {cliente.nombre}
             </Link>
-            ·
-            <a href={`tel:${cliente.telefono}`} className="underline">
-              {formatearTelefono(cliente.telefono)}
-            </a>
+            {cliente.telefono && (
+              <>
+                ·
+                <a href={`tel:${cliente.telefono}`} className="underline">
+                  {formatearTelefono(cliente.telefono)}
+                </a>
+              </>
+            )}
           </span>
         </div>
       </div>

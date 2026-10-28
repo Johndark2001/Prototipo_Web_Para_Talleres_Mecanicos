@@ -12,7 +12,11 @@ from pydantic import (
 )
 
 from app.schemas.comunes import Nombre, error_campo, rechazar_nulo, vacio_a_nulo
+from app.schemas.ordenes import UsuarioResumen
 from app.schemas.vehiculos import VehiculoResumen
+
+# La API exige la palabra escrita, no solo un "sí": anonimizar no se puede deshacer.
+PALABRA_CONFIRMACION = "ANONIMIZAR"
 
 
 def _validar_telefono(valor: Any) -> str:
@@ -41,6 +45,12 @@ def _exigir_autorizacion(valor: bool) -> bool:
             "no se puede registrar al cliente"
         )
     return valor
+
+
+def _exigir_confirmacion(valor: Any) -> str:
+    if not isinstance(valor, str) or valor.strip().upper() != PALABRA_CONFIRMACION:
+        raise error_campo(f"Escriba {PALABRA_CONFIRMACION} para confirmar")
+    return PALABRA_CONFIRMACION
 
 
 Telefono = Annotated[str, BeforeValidator(_validar_telefono)]
@@ -75,6 +85,12 @@ class ClienteActualizar(BaseModel):
     _obligatorios = field_validator("nombre", "telefono", "activo", mode="before")(rechazar_nulo)
 
 
+class ClienteAnonimizar(BaseModel):
+    """Confirmación explícita de la anonimización (RN-11)."""
+
+    confirmacion: Annotated[str, BeforeValidator(_exigir_confirmacion)]
+
+
 class ClienteSalida(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -86,6 +102,8 @@ class ClienteSalida(BaseModel):
     autoriza_datos: bool
     fecha_autorizacion: datetime
     activo: bool
+    anonimizado: bool
+    anonimizado_en: datetime | None
     creado_en: datetime
     actualizado_en: datetime
 
@@ -96,3 +114,4 @@ class ClienteListado(ClienteSalida):
 
 class ClienteDetalle(ClienteSalida):
     vehiculos: list[VehiculoResumen]
+    anonimizador: UsuarioResumen | None

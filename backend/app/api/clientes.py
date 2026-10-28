@@ -2,9 +2,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.api.deps import DB, AdminORecepcion, UsuarioActual
+from app.api.deps import DB, AdminORecepcion, SoloAdmin, UsuarioActual
 from app.schemas.clientes import (
     ClienteActualizar,
+    ClienteAnonimizar,
     ClienteCrear,
     ClienteDetalle,
     ClienteListado,
@@ -55,3 +56,11 @@ def actualizar_cliente(
 ) -> ClienteSalida:
     """También desactiva o reactiva (`activo`): los clientes no se borran (RN-11)."""
     return ClienteSalida.model_validate(servicio.actualizar(db, actual, cliente_id, datos))
+
+
+@router.post("/{cliente_id}/anonimizar", response_model=ClienteDetalle)
+def anonimizar_cliente(
+    cliente_id: int, datos: ClienteAnonimizar, actual: SoloAdmin, db: DB
+) -> ClienteDetalle:
+    """Solo el ADMIN, y escribiendo ANONIMIZAR en `confirmacion` (RN-11). No se deshace."""
+    return ClienteDetalle.model_validate(servicio.anonimizar(db, actual, cliente_id))

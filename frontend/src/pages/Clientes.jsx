@@ -27,7 +27,8 @@ function FilaCliente({ cliente }) {
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{cliente.nombre}</p>
           <p className="truncate text-sm text-texto-suave">
-            {formatearTelefono(cliente.telefono)} · {carros} {carros === 1 ? 'carro' : 'carros'}
+            {cliente.telefono && `${formatearTelefono(cliente.telefono)} · `}
+            {carros} {carros === 1 ? 'carro' : 'carros'}
           </p>
         </div>
         {!cliente.activo && <EtiquetaActivo activo={false} />}

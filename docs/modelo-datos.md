@@ -90,6 +90,8 @@ Convenciones de esta sección:
 | autoriza_datos | boolean | no | CHECK `autoriza_datos = true` (RN-10) |
 | fecha_autorizacion | timestamptz | no | |
 | anonimizado | boolean | no | por defecto `false` (RN-11) |
+| anonimizado_en | timestamptz | sí | cuándo se anonimizó (A-7) |
+| anonimizado_por | bigint | sí | **FK** → usuario.id; quién lo anonimizó, siempre un ADMIN (A-7) |
 | activo | boolean | no | por defecto `true` |
 | creado_en | timestamptz | no | por defecto `now()` |
 | actualizado_en | timestamptz | no | por defecto `now()` |
@@ -268,6 +270,7 @@ CHECK compuesto:
 | repuesto – movimiento_inventario | 1 : 0..N | opcional | Trazabilidad del stock |
 | orden_trabajo – movimiento_inventario | 0..1 : N | obligatoria en `SALIDA` y `DEVOLUCION` | Qué orden originó el movimiento |
 | usuario – historial, asignación, líneas y movimientos | 1 : N | obligatoria | Trazabilidad por usuario (P-7) |
+| usuario – cliente (anonimizado_por) | 0..1 : N | solo en clientes anonimizados | Quién anonimizó al cliente (RN-11, A-7) |
 
 **Relación muchos a muchos resuelta.** Orden y repuesto tienen una relación N:M, que se resuelve con `orden_repuesto` (lleva cantidad y precio). Lo mismo ocurre entre orden y servicio, que se resuelve con `orden_servicio`.
 
@@ -281,6 +284,7 @@ CHECK compuesto:
 | Consecutivo de orden por taller (RN-12) | `taller.siguiente_numero_orden` con bloqueo de fila + UQ `(taller_id, numero)` |
 | Enlace de seguimiento único | UQ `codigo_seguimiento` |
 | Autorización de datos obligatoria (RN-10) | `CHECK cliente.autoriza_datos = true` |
+| Anonimización coherente y auditada (RN-11, A-7) | `CHECK` `ck_cliente_anonimizacion_coherente`: sin anonimizar no hay auditoría; anonimizado exige `anonimizado_en` y `anonimizado_por`, sin correo ni documento, e inactivo |
 | Motivo obligatorio al cancelar (RN-18) | `CHECK (estado <> 'CANCELADA' OR motivo_cancelacion IS NOT NULL)` |
 | Fecha de entrega obligatoria al entregar | `CHECK (estado <> 'ENTREGADO' OR fecha_entrega IS NOT NULL)` |
 | Cantidades y precios válidos | CHECK `> 0` en cantidades y `>= 0` en precios |
@@ -295,7 +299,7 @@ CHECK compuesto:
 - `trabajo_realizado` es obligatorio para pasar a `REPARADO` (RN-17);
 - la nota es obligatoria al retroceder de estado y en los ajustes de inventario;
 - cálculo de la liquidación (RN-06);
-- anonimización del cliente (RN-11).
+- anonimización del cliente (RN-11): solo ADMIN, confirmación escrita, sin órdenes abiertas e irreversible (SPEC §21.7).
 
 ## 6. Diagrama ER (Mermaid)
 
@@ -325,6 +329,7 @@ erDiagram
     REPUESTO ||--o{ MOVIMIENTO_INVENTARIO : tiene
     ORDEN_TRABAJO |o--o{ MOVIMIENTO_INVENTARIO : origina
     USUARIO ||--o{ MOVIMIENTO_INVENTARIO : realiza
+    USUARIO |o--o{ CLIENTE : anonimiza
 
     TALLER {
         bigint id PK
@@ -358,6 +363,8 @@ erDiagram
         boolean autoriza_datos
         timestamptz fecha_autorizacion
         boolean anonimizado
+        timestamptz anonimizado_en "nullable"
+        bigint anonimizado_por FK "nullable"
         boolean activo
         timestamptz creado_en
         timestamptz actualizado_en
