@@ -7,6 +7,7 @@ Proyecto de grado de Ingeniería de Software, Corporación Universitaria Iberoam
 - **Qué se construye y por qué:** [SPEC.md](SPEC.md)
 - **Decisiones técnicas:** [docs/decisions/](docs/decisions/)
 - **Modelo de datos:** [docs/modelo-datos.md](docs/modelo-datos.md)
+- **Documentación para la sustentación:** [docs/sustentacion/](docs/sustentacion/README.md) (manuales, informe, guiones y matriz de requisitos)
 
 ## Tecnologías
 

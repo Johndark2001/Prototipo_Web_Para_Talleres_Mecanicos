@@ -9,6 +9,7 @@
 | Programa | Ingeniería de Software — Corporación Universitaria Iberoamericana |
 | Decisiones técnicas | [docs/decisions/](docs/decisions/) (ADR-001 a ADR-006) |
 | Modelo de datos | [docs/modelo-datos.md](docs/modelo-datos.md) · [docs/modelo-datos.dbml](docs/modelo-datos.dbml) |
+| Documentación de sustentación | [docs/sustentacion/](docs/sustentacion/README.md) (aprobada el 28/10/2026, §21.8) |
 
 Este documento es la referencia oficial para construir el MVP. Si el código y este SPEC no coinciden, se corrige primero el SPEC y después el código.
 
@@ -737,6 +738,22 @@ Cierra la decisión S2-5 (RN-11, RNF-06). Migración `0005`.
 | A-7 | La auditoría se guarda en el propio cliente (`anonimizado_en`, `anonimizado_por`), sin una tabla de auditoría general. Un CHECK de la base exige que un cliente anonimizado tenga quién y cuándo, no conserve correo ni documento y esté inactivo. |
 
 **Anonimización APROBADA el 28/10/2026** tras la validación funcional del autor. La Semana 5 y el despliegue solo empiezan con su autorización expresa.
+
+### 21.8 Cierre de la versión previa a la Semana 5 (28/10/2026)
+
+El autor aprobó el estado del proyecto con la anonimización (commit `84f20f3`) y el paquete de documentación de sustentación.
+
+| Elemento | Estado |
+|---|---|
+| RN-11 | **Implementada.** Nada de la historia se borra; clientes, vehículos, repuestos y usuarios se desactivan; los datos personales del cliente se anonimizan (A-1 a A-7). Evidencia: `test_anonimizacion.py` y la validación funcional del autor. |
+| RNF-06 | **Implementado.** Autorización con fecha (RN-10), datos mínimos y anonimización auditada. |
+| Documentación de sustentación | **Aprobada.** Once documentos en [docs/sustentacion/](docs/sustentacion/README.md): manuales de usuario, del administrador y técnico; informe ejecutivo; guion de demostración; preguntas del jurado; matriz de requisitos; resultados; trabajo futuro; guion de sustentación y resumen ejecutivo. Son la base de RF-21; la guía rápida para el piloto sigue pendiente (Semana 6). |
+| Pruebas | 214 pruebas automatizadas, todas pasan. |
+| Datos | Solo ficticios (H-5). |
+
+**Pendiente para la Semana 5 (§17.2):** despliegue en Render y Neon con HTTPS, ajustando el límite por IP detrás del proxy (S4-8); reportes RF-15, empezando por R2; dashboard completo (RF-14); seguridad (límite de intentos de inicio de sesión, cabeceras y auditoría de dependencias); completar RNF-09.
+
+La Semana 5 **no ha empezado** y solo empieza con la autorización expresa del autor.
 
 ---
 
