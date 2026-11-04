@@ -23,7 +23,7 @@ export default function HistorialOrden({ historial, asignaciones }) {
   ].sort((x, y) => (x.fecha < y.fecha ? 1 : -1))
 
   return (
-    <ol className="flex flex-col divide-y divide-borde rounded-lg border border-borde bg-superficie">
+    <ol className="flex flex-col divide-y divide-borde tarjeta">
       {eventos.map((evento) => (
         <li key={evento.clave} className="flex flex-col gap-0.5 px-4 py-3 text-sm">
           <p>

@@ -8,16 +8,52 @@ import CampoFormulario from '../components/CampoFormulario.jsx'
 import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import ErrorCarga from '../components/ErrorCarga.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
+import Icono from '../components/Icono.jsx'
 import SelectorCliente from '../components/SelectorCliente.jsx'
+import { TIPOS_VEHICULO } from '../constantes.js'
 import { normalizarPlaca } from '../formato.js'
 import { useAvisoNavegacion } from '../hooks/useAvisoNavegacion.js'
 import { useConsulta } from '../hooks/useConsulta.js'
+
+/** Elección del tipo con dos opciones grandes (radios nativos: teclado y lector de pantalla). */
+function SelectorTipo({ valor, alCambiar, error }) {
+  return (
+    <fieldset className="flex flex-col gap-1">
+      <legend className="mb-1 text-sm font-medium text-texto">Tipo de vehículo</legend>
+      <div className="grid grid-cols-2 gap-2 sm:max-w-sm">
+        {Object.entries(TIPOS_VEHICULO).map(([clave, { etiqueta, icono }]) => (
+          <label
+            key={clave}
+            className={`flex min-h-12 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm transition-[background-color,border-color,color] duration-150 ease-salida has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primario ${
+              valor === clave
+                ? 'border-primario bg-primario-suave font-semibold text-primario-oscuro'
+                : 'border-borde bg-superficie font-medium text-texto-suave hover:border-texto-suave/40 hover:text-texto'
+            }`}
+          >
+            <input
+              type="radio"
+              name="tipo"
+              value={clave}
+              checked={valor === clave}
+              onChange={() => alCambiar(clave)}
+              className="sr-only"
+            />
+            <Icono nombre={icono} />
+            {etiqueta}
+          </label>
+        ))}
+      </div>
+      {error && <p className="text-sm text-peligro">{error}</p>}
+    </fieldset>
+  )
+}
 
 function Formulario({ inicial, duenoInicial }) {
   const navegar = useNavigate()
   const esNuevo = !inicial.id
   const [datos, setDatos] = useState({
     placa: inicial.placa ?? '',
+    tipo: TIPOS_VEHICULO[inicial.tipo] ? inicial.tipo : 'CARRO',
     marca: inicial.marca ?? '',
     modelo: inicial.modelo ?? '',
     anio: inicial.anio ?? '',
@@ -30,13 +66,15 @@ function Formulario({ inicial, duenoInicial }) {
 
   const cambiar = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value })
   const cambioDeDueno = !esNuevo && dueno && dueno.id !== duenoInicial?.id
+  const esMoto = datos.tipo === 'MOTO'
+  const nombreTipo = TIPOS_VEHICULO[datos.tipo].etiqueta
 
   async function enviar(evento) {
     evento.preventDefault()
     setErrores({})
     setErrorGeneral(null)
     if (!dueno) {
-      setErrores({ cliente_id: 'Elija el dueño del carro' })
+      setErrores({ cliente_id: `Elija el dueño de${esMoto ? ' la moto' : 'l carro'}` })
       return
     }
     setGuardando(true)
@@ -46,7 +84,11 @@ function Formulario({ inicial, duenoInicial }) {
         ? await api.post('/vehiculos', cuerpo)
         : await api.patch(`/vehiculos/${inicial.id}`, cuerpo)
       navegar(`/vehiculos/${guardado.id}`, {
-        state: { aviso: esNuevo ? `Carro ${guardado.placa} registrado` : 'Cambios guardados' },
+        state: {
+          aviso: esNuevo
+            ? `${nombreTipo} ${guardado.placa} ${esMoto ? 'registrada' : 'registrado'}`
+            : 'Cambios guardados',
+        },
       })
     } catch (err) {
       setErrores(erroresPorCampo(err))
@@ -56,12 +98,13 @@ function Formulario({ inicial, duenoInicial }) {
   }
 
   return (
-    <form
-      onSubmit={enviar}
-      noValidate
-      className="flex flex-col gap-4 rounded-lg border border-borde bg-superficie p-4"
-    >
+    <form onSubmit={enviar} noValidate className="tarjeta flex flex-col gap-4 p-4 sm:p-6">
       {errorGeneral && <Aviso tipo="error">{errorGeneral}</Aviso>}
+      <SelectorTipo
+        valor={datos.tipo}
+        alCambiar={(tipo) => setDatos({ ...datos, tipo })}
+        error={errores.tipo}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         <CampoFormulario
           etiqueta="Placa"
@@ -80,7 +123,7 @@ function Formulario({ inicial, duenoInicial }) {
           value={datos.marca}
           onChange={cambiar('marca')}
           error={errores.marca}
-          placeholder="Mazda, Chevrolet, Yamaha…"
+          placeholder={esMoto ? 'Yamaha, AKT, Bajaj…' : 'Mazda, Chevrolet, Renault…'}
           maxLength={50}
           obligatorio
         />
@@ -89,7 +132,7 @@ function Formulario({ inicial, duenoInicial }) {
           value={datos.modelo}
           onChange={cambiar('modelo')}
           error={errores.modelo}
-          placeholder="3, Spark GT, FZ…"
+          placeholder={esMoto ? 'FZ 2.0, NKD 125…' : '3, Spark GT, Logan…'}
           maxLength={50}
           obligatorio
         />
@@ -120,12 +163,12 @@ function Formulario({ inicial, duenoInicial }) {
         ayuda={
           esNuevo
             ? undefined
-            : 'Cambie el dueño solo si el carro se vendió. Las órdenes anteriores conservan a su dueño de entonces.'
+            : 'Cambie el dueño solo si el vehículo se vendió. Las órdenes anteriores conservan a su dueño de entonces.'
         }
       />
       {cambioDeDueno && (
         <Aviso tipo="info">
-          Al guardar, el carro pasará de {duenoInicial.nombre} a {dueno.nombre}.
+          Al guardar, el vehículo pasará de {duenoInicial.nombre} a {dueno.nombre}.
         </Aviso>
       )}
 
@@ -134,7 +177,7 @@ function Formulario({ inicial, duenoInicial }) {
           Cancelar
         </EnlaceBoton>
         <Boton type="submit" cargando={guardando}>
-          {esNuevo ? 'Guardar carro' : 'Guardar cambios'}
+          {esNuevo ? `Guardar ${nombreTipo.toLowerCase()}` : 'Guardar cambios'}
         </Boton>
       </div>
     </form>
@@ -160,13 +203,15 @@ export default function VehiculoFormulario() {
     contenido = <Formulario key={datos.id} inicial={datos} duenoInicial={datos.cliente} />
   } else {
     const dueno = datos?.activo ? datos : null
-    contenido = <Formulario inicial={{ placa: ubicacion.state?.placa }} duenoInicial={dueno} />
+    contenido = (
+      <Formulario inicial={{ placa: ubicacion.state?.placa, tipo: ubicacion.state?.tipo }} duenoInicial={dueno} />
+    )
   }
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <h1 className="text-2xl font-semibold">
-        {id ? `Editar carro${datos?.placa ? ` ${datos.placa}` : ''}` : 'Nuevo carro'}
+        {id ? `Editar vehículo${datos?.placa ? ` ${datos.placa}` : ''}` : 'Nuevo vehículo'}
       </h1>
       {aviso && (
         <Aviso tipo={aviso.tipo} alCerrar={() => setAviso(null)}>

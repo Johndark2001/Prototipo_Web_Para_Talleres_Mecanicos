@@ -23,14 +23,14 @@ export default function EnlaceSeguimiento({ codigo }) {
   }
 
   return (
-    <section aria-labelledby="titulo-enlace" className="flex flex-col gap-2 rounded-lg border border-borde bg-superficie p-4">
+    <section aria-labelledby="titulo-enlace" className="flex flex-col gap-2 tarjeta p-4">
       <h2 id="titulo-enlace" className="text-xs font-medium uppercase tracking-wide text-texto-suave">
         Enlace para el cliente
       </h2>
       <p className="text-sm text-texto-suave">
         Compártalo con el cliente: verá el estado del carro y lo que se cobra, sin datos personales.
       </p>
-      <p className="break-all rounded-md bg-fondo px-3 py-2 font-mono text-xs">{url}</p>
+      <p className="break-all rounded-lg bg-fondo px-3 py-2 font-mono text-xs">{url}</p>
       <div className="flex flex-col gap-2 sm:flex-row">
         <Boton variante="secundario" onClick={copiar}>
           <Icono nombre={copiado ? 'check' : 'copiar'} className="size-4" />
@@ -40,7 +40,7 @@ export default function EnlaceSeguimiento({ codigo }) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold text-primario hover:bg-primario-suave"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold text-primario hover:bg-primario-suave"
         >
           <Icono nombre="enlace" className="size-4" />
           Ver como el cliente

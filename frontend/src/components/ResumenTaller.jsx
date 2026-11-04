@@ -31,6 +31,7 @@ export default function ResumenTaller() {
       clave: estado,
       etiqueta: ESTADOS_ORDEN[estado].etiqueta,
       icono: ESTADOS_ORDEN[estado].icono,
+      clase: ESTADOS_ORDEN[estado].clase,
       total,
       a: `/ordenes?filtro=${estado}`,
     })),
@@ -38,6 +39,7 @@ export default function ResumenTaller() {
       clave: 'ENTREGADOS_HOY',
       etiqueta: 'Entregados hoy',
       icono: 'check',
+      clase: 'bg-exito-suave text-exito',
       total: datos.entregadas_hoy,
       a: '/ordenes?filtro=ENTREGADO',
     },
@@ -46,18 +48,22 @@ export default function ResumenTaller() {
   return (
     <div className="flex flex-col gap-4">
       {/* Cada conteo abre la lista ya filtrada (reconocer antes que recordar). */}
-      <ul aria-label="Órdenes por estado" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <ul aria-label="Órdenes por estado" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {conteos.map((c) => (
           <li key={c.clave}>
             <Link
               to={c.a}
-              className="flex min-h-20 flex-col justify-between rounded-lg border border-borde bg-superficie p-3 hover:border-primario"
+              className="tarjeta group flex min-h-24 flex-col justify-between gap-3 p-4 transition-[border-color,box-shadow,transform] duration-150 ease-salida hover:-translate-y-px hover:border-primario/40 hover:shadow-elevada active:translate-y-0"
             >
-              <span className="flex items-center gap-1 text-xs font-medium text-texto-suave">
-                <Icono nombre={c.icono} className="size-3.5" />
-                {c.etiqueta}
+              <span className="flex items-center gap-2 text-xs font-medium text-texto-suave">
+                <span className={`flex size-6 shrink-0 items-center justify-center rounded-md ${c.clase}`}>
+                  <Icono nombre={c.icono} className="size-3.5" />
+                </span>
+                <span className="min-w-0 leading-tight">{c.etiqueta}</span>
               </span>
-              <span className="text-2xl font-semibold">{c.total}</span>
+              <span className={`text-3xl font-semibold tabular-nums ${c.total === 0 ? 'text-texto-suave' : ''}`}>
+                {c.total}
+              </span>
             </Link>
           </li>
         ))}
@@ -66,7 +72,7 @@ export default function ResumenTaller() {
       {datos.stock_bajo_total > 0 && (
         <section
           aria-labelledby="titulo-alertas"
-          className="flex flex-col gap-2 rounded-lg border border-aviso/40 bg-aviso-suave p-4"
+          className="flex flex-col gap-2 rounded-lg border border-aviso/30 bg-aviso-suave p-4 shadow-tarjeta"
         >
           <h2 id="titulo-alertas" className="flex items-center gap-2 font-semibold text-aviso">
             <Icono nombre="alerta" className="size-5" />

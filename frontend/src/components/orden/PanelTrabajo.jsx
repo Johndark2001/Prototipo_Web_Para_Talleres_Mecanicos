@@ -18,10 +18,10 @@ function AreaTexto({ etiqueta, valor, alCambiar, editable, ayuda, placeholder })
           maxLength={5000}
           placeholder={placeholder}
           aria-describedby={ayuda ? `${id}-ayuda` : undefined}
-          className="w-full rounded-md border border-borde bg-superficie px-3 py-2 text-base sm:text-sm"
+          className="w-full rounded-lg border border-borde bg-superficie px-3 py-2 text-base sm:text-sm"
         />
       ) : (
-        <p id={id} className="whitespace-pre-line rounded-md bg-fondo px-3 py-2 text-sm">
+        <p id={id} className="whitespace-pre-line rounded-lg bg-fondo px-3 py-2 text-sm">
           {valor || '—'}
         </p>
       )}
@@ -41,7 +41,7 @@ export default function PanelTrabajo({ orden, borrador, alCambiar, sucio, guarda
   return (
     <section
       aria-labelledby="titulo-trabajo"
-      className="flex flex-col gap-3 rounded-lg border border-borde bg-superficie p-4"
+      className="flex flex-col gap-3 tarjeta p-4"
     >
       <h2 id="titulo-trabajo" className="text-base font-semibold">
         Trabajo en el carro

@@ -5,6 +5,7 @@ import ChipEstado from '../components/ChipEstado.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
+import { MarcaLogo } from '../components/Logo.jsx'
 import Placa from '../components/Placa.jsx'
 import LineaTiempo from '../components/orden/LineaTiempo.jsx'
 import { formatearCantidad, formatearFechaHora, formatearPesos } from '../formato.js'
@@ -68,7 +69,7 @@ export default function Seguimiento() {
     const { liquidacion } = orden
     contenido = (
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2 rounded-lg border border-borde bg-superficie p-4">
+        <div className="flex flex-col gap-2 tarjeta p-4">
           <div className="flex flex-wrap items-center gap-3">
             <Placa placa={orden.placa} grande />
             <span className="font-medium">
@@ -82,12 +83,12 @@ export default function Seguimiento() {
           <p className="text-base">{MENSAJES[orden.estado]}</p>
         </div>
 
-        <div className="rounded-lg border border-borde bg-superficie p-4">
+        <div className="tarjeta p-4">
           <LineaTiempo estado={orden.estado} historial={etapas} />
         </div>
 
         {orden.estado !== 'CANCELADA' && (
-          <section aria-labelledby="titulo-cobro" className="flex flex-col gap-3 rounded-lg border border-borde bg-superficie p-4">
+          <section aria-labelledby="titulo-cobro" className="flex flex-col gap-3 tarjeta p-4">
             <h2 id="titulo-cobro" className="text-base font-semibold">
               Lo que se cobra
             </h2>
@@ -132,7 +133,7 @@ export default function Seguimiento() {
     <div className="min-h-dvh bg-fondo">
       <header className="border-b border-borde bg-superficie px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-center gap-2">
-          <Icono nombre="llave" className="size-6 text-primario" />
+          <MarcaLogo className="size-8 shrink-0" />
           <div>
             <p className="font-semibold">{orden?.taller ?? 'Taller Digital'}</p>
             {orden && <p className="text-xs text-texto-suave">Orden #{orden.numero}</p>}

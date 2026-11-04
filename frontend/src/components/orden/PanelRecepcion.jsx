@@ -55,7 +55,7 @@ export default function PanelRecepcion({ orden, alActualizar }) {
   if (editando) {
     const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value })
     return (
-      <form onSubmit={guardar} noValidate className="flex flex-col gap-3 rounded-lg border border-borde bg-superficie p-4">
+      <form onSubmit={guardar} noValidate className="flex flex-col gap-3 tarjeta p-4">
         {errores.general && !Object.keys(errores).some((c) => c !== 'general') && (
           <p className="text-sm text-peligro">{errores.general}</p>
         )}
@@ -77,7 +77,7 @@ export default function PanelRecepcion({ orden, alActualizar }) {
   }
 
   return (
-    <section aria-label="Datos de recepción" className="flex flex-col gap-3 rounded-lg border border-borde bg-superficie p-4">
+    <section aria-label="Datos de recepción" className="flex flex-col gap-3 tarjeta p-4">
       <dl className="grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Dato etiqueta="Motivo de ingreso">{orden.motivo_ingreso}</Dato>

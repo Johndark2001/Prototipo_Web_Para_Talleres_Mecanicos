@@ -5,6 +5,7 @@ import { api, erroresPorCampo } from '../api/cliente.js'
 import Aviso from '../components/Aviso.jsx'
 import Boton from '../components/Boton.jsx'
 import CampoFormulario from '../components/CampoFormulario.jsx'
+import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import ErrorCarga from '../components/ErrorCarga.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import { UNIDADES } from '../constantes.js'
@@ -72,7 +73,7 @@ function Formulario({ inicial }) {
   }
 
   return (
-    <form onSubmit={enviar} noValidate className="flex flex-col gap-4 rounded-lg border border-borde bg-superficie p-4">
+    <form onSubmit={enviar} noValidate className="flex flex-col gap-4 tarjeta p-4">
       {errorGeneral && <Aviso tipo="error">{errorGeneral}</Aviso>}
       <div className="grid gap-4 sm:grid-cols-2">
         <CampoFormulario
@@ -151,12 +152,9 @@ function Formulario({ inicial }) {
         </p>
       )}
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Link
-          to={volverA}
-          className="inline-flex min-h-11 items-center justify-center rounded-md border border-borde px-4 text-sm font-semibold hover:bg-fondo"
-        >
+        <EnlaceBoton to={volverA} variante="secundario">
           Cancelar
-        </Link>
+        </EnlaceBoton>
         <Boton type="submit" cargando={guardando}>
           {esNuevo ? 'Guardar repuesto' : 'Guardar cambios'}
         </Boton>

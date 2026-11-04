@@ -11,6 +11,7 @@ from pydantic import (
     field_validator,
 )
 
+from app.models.vehiculo import TipoVehiculo
 from app.schemas.comunes import error_campo, rechazar_nulo, texto_opcional, vacio_a_nulo
 
 # Las placas colombianas tienen 5 (motos antiguas) o 6 caracteres; 7 deja margen.
@@ -42,6 +43,8 @@ Color = texto_opcional(30)
 
 class VehiculoCrear(BaseModel):
     placa: Placa
+    # Opcional para no romper a quien ya registra sin tipo: por defecto es un carro.
+    tipo: TipoVehiculo = TipoVehiculo.CARRO
     marca: TextoVehiculo
     modelo: TextoVehiculo
     anio: Anio = None
@@ -53,6 +56,7 @@ class VehiculoActualizar(BaseModel):
     """Actualización parcial. Cambiar `cliente_id` es registrar un nuevo dueño (venta del carro)."""
 
     placa: Placa | None = None
+    tipo: TipoVehiculo | None = None
     marca: TextoVehiculo | None = None
     modelo: TextoVehiculo | None = None
     anio: Anio = None
@@ -61,7 +65,7 @@ class VehiculoActualizar(BaseModel):
     activo: bool | None = None
 
     _obligatorios = field_validator(
-        "placa", "marca", "modelo", "cliente_id", "activo", mode="before"
+        "placa", "tipo", "marca", "modelo", "cliente_id", "activo", mode="before"
     )(rechazar_nulo)
 
 
@@ -81,6 +85,7 @@ class VehiculoResumen(BaseModel):
 
     id: int
     placa: str
+    tipo: TipoVehiculo
     marca: str
     modelo: str
     anio: int | None

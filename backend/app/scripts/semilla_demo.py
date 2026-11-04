@@ -31,6 +31,7 @@ from app.models import (
     Repuesto,
     RolUsuario,
     Taller,
+    TipoVehiculo,
     Usuario,
     Vehiculo,
 )
@@ -57,7 +58,8 @@ TALLERES = [
             ("Recepción Norte", "recepcion@norte.demo.co", RolUsuario.RECEPCION),
             ("Mecánico Norte", "mecanico@norte.demo.co", RolUsuario.MECANICO),
         ],
-        # (nombre, teléfono, documento, [(placa, marca, modelo, año, color)])
+        # (nombre, teléfono, documento, [(placa, marca, modelo, año, color[, tipo])])
+        # Sin tipo, el vehículo es un carro.
         "clientes": [
             (
                 "Ana Gómez (demo)",
@@ -65,7 +67,7 @@ TALLERES = [
                 "1000000001",
                 [
                     ("ABC123", "Mazda", "3", 2015, "Rojo"),
-                    ("JKL45D", "Yamaha", "FZ 2.0", 2019, "Negro"),
+                    ("JKL45D", "Yamaha", "FZ 2.0", 2019, "Negro", TipoVehiculo.MOTO),
                 ],
             ),
             (
@@ -174,18 +176,19 @@ def cargar_clientes(db: Session, taller_id: int, clientes: list) -> None:
             fecha_autorizacion=datetime.now(UTC),
         )
         db.add(cliente)
-        for placa, marca, modelo, anio, color in vehiculos:
+        for placa, marca, modelo, anio, color, *tipo in vehiculos:
             cliente.vehiculos.append(
                 Vehiculo(
                     taller_id=taller_id,
                     placa=placa,
+                    tipo=tipo[0] if tipo else TipoVehiculo.CARRO,
                     marca=marca,
                     modelo=modelo,
                     anio=anio,
                     color=color,
                 )
             )
-    print(f"  Creados {len(clientes)} clientes con sus carros.")
+    print(f"  Creados {len(clientes)} clientes con sus vehículos.")
 
 
 def _usuario(db: Session, taller_id: int, rol: RolUsuario) -> Usuario:

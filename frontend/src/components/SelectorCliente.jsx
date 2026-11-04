@@ -28,7 +28,7 @@ export default function SelectorCliente({ valor, alCambiar, error, ayuda, enlace
       </legend>
 
       {valor ? (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-borde bg-fondo px-3 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-borde bg-fondo px-3 py-2">
           <div className="min-w-0">
             <p className="truncate font-medium">{valor.nombre}</p>
             <p className="text-sm text-texto-suave">{formatearTelefono(valor.telefono)}</p>
@@ -50,7 +50,7 @@ export default function SelectorCliente({ valor, alCambiar, error, ayuda, enlace
             placeholder="Escriba nombre, teléfono o documento"
             autoComplete="off"
             aria-invalid={Boolean(error)}
-            className={`min-h-11 w-full rounded-md border bg-superficie px-3 text-base sm:text-sm ${
+            className={`min-h-11 w-full rounded-lg border bg-superficie px-3 text-base sm:text-sm ${
               error ? 'border-peligro' : 'border-borde'
             }`}
           />
@@ -61,13 +61,13 @@ export default function SelectorCliente({ valor, alCambiar, error, ayuda, enlace
                 <p className="py-2 text-texto-suave">No hay clientes activos con «{busqueda}».</p>
               )}
               {datos?.data.length > 0 && (
-                <ul className="divide-y divide-borde rounded-md border border-borde">
+                <ul className="divide-y divide-borde rounded-lg border border-borde">
                   {datos.data.map((cliente) => (
                     <li key={cliente.id}>
                       <button
                         type="button"
                         onClick={() => alCambiar(cliente)}
-                        className="flex min-h-11 w-full flex-col items-start px-3 py-2 text-left hover:bg-fondo"
+                        className="flex min-h-11 w-full flex-col items-start px-3 py-2 text-left transition-colors duration-150 hover:bg-fondo"
                       >
                         <span className="font-medium">{cliente.nombre}</span>
                         <span className="text-texto-suave">{formatearTelefono(cliente.telefono)}</span>

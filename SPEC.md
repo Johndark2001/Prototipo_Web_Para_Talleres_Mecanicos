@@ -755,6 +755,18 @@ El autor aprobó el estado del proyecto con la anonimización (commit `84f20f3`)
 
 La Semana 5 **no ha empezado** y solo empieza con la autorización expresa del autor.
 
+### 21.9 Rediseño visual y tipo de vehículo (04/11/2026, pendiente de aprobación del autor)
+
+Cambio pedido por el autor antes de la Semana 5. No toca la lógica de negocio, los roles ni los datos existentes.
+
+| ID | Decisión |
+|---|---|
+| V-1 | El vehículo tiene un `tipo` obligatorio: `CARRO` o `MOTO` (enum `tipo_vehiculo`, migración 0006). Los vehículos ya registrados quedan como `CARRO`; si alguno es una moto, se corrige editándolo. |
+| V-2 | El API acepta `tipo` al crear (opcional, por defecto `CARRO`, para no romper a quien ya registra sin él) y al editar (no se puede vaciar). `GET /vehiculos?tipo=` filtra y se combina con `placa`, `activo` y `cliente_id`. |
+| V-3 | La lista de vehículos filtra Todos, Carros y Motos con un control segmentado que se combina con la búsqueda por placa y con «Incluir inactivos». Cada registro muestra su tipo con ícono y texto (RNF-07), no solo con un emoji. |
+| V-4 | Rediseño visual con los componentes de §11: nuevo logo, inicio de sesión ilustrado, navegación lateral oscura, botones con estados de foco, presión y carga, tarjetas y sombras unificadas. Las animaciones duran 150-320 ms y se apagan con «reducir movimiento». Sin dependencias nuevas (ADR-004): íconos, logo e ilustraciones son SVG propios. Referencia: [docs/guia-skills-diseno.md](docs/guia-skills-diseno.md). |
+| V-5 | Se quitan los subtítulos que repetían el título en Clientes, Órdenes, Vehículos, Inventario e Inicio. Se conserva el de Usuarios porque explica una regla (cada persona entra con su propio correo). |
+
 ---
 
 ## Anexo A — Bocetos de pantallas

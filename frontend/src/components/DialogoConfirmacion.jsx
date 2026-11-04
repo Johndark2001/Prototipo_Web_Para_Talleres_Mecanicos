@@ -31,7 +31,7 @@ export default function DialogoConfirmacion({
         evento.preventDefault()
         alCancelar()
       }}
-      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg bg-superficie p-0 shadow-lg backdrop:bg-black/40"
+      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl bg-superficie p-0 shadow-elevada backdrop:bg-black/40 open:animate-aparecer"
     >
       <div className="flex flex-col gap-3 p-5">
         <h2 className="text-lg font-semibold">{titulo}</h2>

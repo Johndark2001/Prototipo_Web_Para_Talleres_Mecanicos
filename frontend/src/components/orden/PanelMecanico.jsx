@@ -38,7 +38,7 @@ export default function PanelMecanico({ orden, alActualizar, alError }) {
   }
 
   return (
-    <section aria-labelledby="titulo-mecanico" className="flex flex-col gap-3 rounded-lg border border-borde bg-superficie p-4">
+    <section aria-labelledby="titulo-mecanico" className="flex flex-col gap-3 tarjeta p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 id="titulo-mecanico" className="text-xs font-medium uppercase tracking-wide text-texto-suave">

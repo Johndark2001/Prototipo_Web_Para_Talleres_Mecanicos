@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, AdminORecepcion, UsuarioActual
+from app.models import TipoVehiculo
 from app.schemas.comunes import Pagina, Paginacion
 from app.schemas.vehiculos import VehiculoActualizar, VehiculoCrear, VehiculoSalida
 from app.services import vehiculos as servicio
@@ -21,8 +22,9 @@ def listar_vehiculos(
     ] = None,
     cliente_id: int | None = None,
     activo: bool | None = None,
+    tipo: Annotated[TipoVehiculo | None, Query(description="CARRO o MOTO")] = None,
 ) -> Pagina[VehiculoSalida]:
-    vehiculos, total = servicio.listar(db, actual, page, page_size, placa, cliente_id, activo)
+    vehiculos, total = servicio.listar(db, actual, page, page_size, placa, cliente_id, activo, tipo)
     return Pagina[VehiculoSalida](
         data=[VehiculoSalida.model_validate(v) for v in vehiculos],
         pagination=Paginacion.calcular(page, page_size, total),

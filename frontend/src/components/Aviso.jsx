@@ -12,7 +12,7 @@ export default function Aviso({ tipo = 'info', children, alCerrar }) {
   return (
     <div
       role={tipo === 'error' ? 'alert' : 'status'}
-      className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${clase}`}
+      className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${clase}`}
     >
       <Icono nombre={icono} className="mt-0.5 size-4 shrink-0" />
       <div className="flex-1">{children}</div>

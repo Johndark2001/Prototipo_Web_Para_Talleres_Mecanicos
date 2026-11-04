@@ -11,7 +11,7 @@ from app.models.orden import (
 )
 from app.models.taller import Taller
 from app.models.usuario import RolUsuario, Usuario
-from app.models.vehiculo import Vehiculo
+from app.models.vehiculo import TipoVehiculo, Vehiculo
 
 __all__ = [
     "ESTADOS_FINALES",
@@ -28,6 +28,7 @@ __all__ = [
     "Servicio",
     "Taller",
     "TipoMovimiento",
+    "TipoVehiculo",
     "Usuario",
     "Vehiculo",
 ]

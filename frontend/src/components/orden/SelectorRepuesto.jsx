@@ -22,7 +22,7 @@ export default function SelectorRepuesto({ valor, alCambiar, error }) {
     return (
       <div className="flex flex-col gap-1">
         <span className="text-sm font-medium">Repuesto</span>
-        <div className="flex items-center justify-between gap-3 rounded-md border border-borde bg-fondo px-3 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-borde bg-fondo px-3 py-2">
           <div className="min-w-0">
             <p className="truncate font-medium">{valor.nombre}</p>
             <p className="flex flex-wrap items-center gap-2 text-sm text-texto-suave">
@@ -56,7 +56,7 @@ export default function SelectorRepuesto({ valor, alCambiar, error }) {
         placeholder="Escriba el nombre o el código"
         autoComplete="off"
         aria-invalid={Boolean(error)}
-        className={`min-h-11 w-full rounded-md border bg-superficie px-3 text-base sm:text-sm ${
+        className={`min-h-11 w-full rounded-lg border bg-superficie px-3 text-base sm:text-sm ${
           error ? 'border-peligro' : 'border-borde'
         }`}
       />
@@ -67,7 +67,7 @@ export default function SelectorRepuesto({ valor, alCambiar, error }) {
             <p className="py-2 text-texto-suave">No hay repuestos activos con «{busqueda}».</p>
           )}
           {datos?.data.length > 0 && (
-            <ul className="divide-y divide-borde rounded-md border border-borde">
+            <ul className="divide-y divide-borde rounded-lg border border-borde">
               {datos.data.map((repuesto) => {
                 const agotado = Number(repuesto.stock_actual) === 0
                 return (
@@ -76,7 +76,7 @@ export default function SelectorRepuesto({ valor, alCambiar, error }) {
                       type="button"
                       onClick={() => alCambiar(repuesto)}
                       disabled={agotado}
-                      className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-fondo disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2 text-left transition-colors duration-150 hover:bg-fondo disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{repuesto.nombre}</span>

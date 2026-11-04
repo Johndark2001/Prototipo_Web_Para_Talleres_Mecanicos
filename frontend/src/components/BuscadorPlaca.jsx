@@ -45,13 +45,13 @@ export default function BuscadorPlaca({ className = '' }) {
         autoComplete="off"
         autoCapitalize="characters"
         maxLength={12}
-        className="min-h-11 w-full min-w-0 rounded-l-md border border-r-0 border-borde bg-superficie px-3 font-mono text-base uppercase placeholder:font-sans placeholder:normal-case sm:text-sm"
+        className="min-h-11 w-full min-w-0 rounded-l-lg border border-r-0 border-borde bg-superficie px-3 font-mono text-base uppercase placeholder:font-sans placeholder:normal-case sm:text-sm"
       />
       <button
         type="submit"
         disabled={buscando}
         aria-label="Buscar"
-        className="inline-flex min-h-11 items-center rounded-r-md bg-primario px-3 text-white hover:bg-primario-oscuro disabled:opacity-60"
+        className="inline-flex min-h-11 items-center rounded-r-lg bg-primario px-3 text-white hover:bg-primario-oscuro disabled:opacity-60"
       >
         <Icono nombre="buscar" />
       </button>

@@ -33,7 +33,7 @@ function FormularioServicio({ orden, alGuardar, alCancelar }) {
   }
 
   return (
-    <form onSubmit={enviar} noValidate className="flex flex-col gap-3 rounded-md border border-borde bg-fondo p-3">
+    <form onSubmit={enviar} noValidate className="flex flex-col gap-3 rounded-lg border border-borde bg-fondo p-3">
       <CampoFormulario
         etiqueta="Trabajo realizado"
         value={datos.descripcion}
@@ -107,7 +107,7 @@ function FormularioRepuesto({ orden, alGuardar, alCancelar }) {
   }
 
   return (
-    <form onSubmit={enviar} noValidate className="flex flex-col gap-3 rounded-md border border-borde bg-fondo p-3">
+    <form onSubmit={enviar} noValidate className="flex flex-col gap-3 rounded-lg border border-borde bg-fondo p-3">
       <SelectorRepuesto
         valor={repuesto}
         alCambiar={(elegido) => {
@@ -145,7 +145,7 @@ function Lineas({ titulo, lineas, describir, editable, alQuitar, vacio }) {
       {lineas.length === 0 ? (
         <p className="text-sm text-texto-suave">{vacio}</p>
       ) : (
-        <ul className="divide-y divide-borde rounded-md border border-borde">
+        <ul className="divide-y divide-borde rounded-lg border border-borde">
           {lineas.map((linea) => {
             const { nombre, detalle } = describir(linea)
             return (
@@ -206,7 +206,7 @@ export default function PanelLiquidacion({ orden, alActualizar, alError }) {
   }
 
   return (
-    <section aria-labelledby="titulo-liquidacion" className="flex flex-col gap-4 rounded-lg border border-borde bg-superficie p-4">
+    <section aria-labelledby="titulo-liquidacion" className="flex flex-col gap-4 tarjeta p-4">
       <h2 id="titulo-liquidacion" className="flex items-center gap-2 text-base font-semibold">
         <Icono nombre="pesos" className="size-5 text-texto-suave" />
         Mano de obra, repuestos y total

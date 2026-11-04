@@ -38,6 +38,7 @@ Hay tres conceptos que **no** tienen tabla propia:
 | `rol_usuario` | `ADMIN`, `RECEPCION`, `MECANICO` |
 | `estado_orden` | `RECIBIDO`, `EN_DIAGNOSTICO`, `ESPERANDO_REPUESTOS`, `REPARADO`, `ENTREGADO`, `CANCELADA` |
 | `tipo_movimiento` | `ENTRADA`, `SALIDA`, `AJUSTE`, `DEVOLUCION` |
+| `tipo_vehiculo` | `CARRO`, `MOTO` (migración 0006, SPEC §21.9) |
 
 ## 3. Entidades y atributos
 
@@ -104,6 +105,7 @@ Convenciones de esta sección:
 | taller_id | bigint | no | **FK** → taller.id |
 | cliente_id | bigint | no | **FK** → cliente.id (dueño actual) |
 | placa | varchar(10) | no | **UQ** `(taller_id, placa)`; normalizada (RN-20) |
+| tipo | tipo_vehiculo | no | por defecto `CARRO`; los vehículos anteriores a la migración 0006 quedan como carros |
 | marca | varchar(50) | no | |
 | modelo | varchar(50) | no | |
 | anio | smallint | sí | CHECK entre 1950 y 2100 |
@@ -374,6 +376,7 @@ erDiagram
         bigint taller_id FK
         bigint cliente_id FK
         varchar placa "UQ por taller"
+        tipo_vehiculo tipo "CARRO o MOTO"
         varchar marca
         varchar modelo
         smallint anio "nullable"

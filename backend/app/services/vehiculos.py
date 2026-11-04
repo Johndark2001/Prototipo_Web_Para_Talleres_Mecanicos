@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core.db import restriccion_violada
 from app.core.errores import DatosInvalidos, NoEncontrado
-from app.models import Cliente, Usuario, Vehiculo
+from app.models import Cliente, TipoVehiculo, Usuario, Vehiculo
 from app.schemas.vehiculos import VehiculoActualizar, VehiculoCrear, normalizar_placa
 from app.services import clientes as servicio_clientes
 
@@ -25,6 +25,7 @@ def listar(
     placa: str | None = None,
     cliente_id: int | None = None,
     activo: bool | None = None,
+    tipo: TipoVehiculo | None = None,
 ) -> tuple[list[Vehiculo], int]:
     filtros = [Vehiculo.taller_id == actual.taller_id]
     orden = [Vehiculo.placa, Vehiculo.id]
@@ -37,6 +38,8 @@ def listar(
         filtros.append(Vehiculo.cliente_id == cliente_id)
     if activo is not None:
         filtros.append(Vehiculo.activo == activo)
+    if tipo is not None:
+        filtros.append(Vehiculo.tipo == tipo)
 
     total = db.scalar(select(func.count()).select_from(Vehiculo).where(*filtros)) or 0
     vehiculos = db.scalars(
@@ -101,6 +104,7 @@ def crear(db: Session, actual: Usuario, datos: VehiculoCrear) -> Vehiculo:
         taller_id=actual.taller_id,
         cliente=cliente,
         placa=datos.placa,
+        tipo=datos.tipo,
         marca=datos.marca,
         modelo=datos.modelo,
         anio=datos.anio,

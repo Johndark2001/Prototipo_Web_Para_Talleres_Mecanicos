@@ -1,9 +1,11 @@
+import enum
 from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
     DateTime,
+    Enum,
     ForeignKey,
     Identity,
     SmallInteger,
@@ -16,6 +18,11 @@ from sqlalchemy.sql.expression import true
 
 from app.core.db import Base
 from app.models.cliente import Cliente
+
+
+class TipoVehiculo(enum.StrEnum):
+    CARRO = "CARRO"
+    MOTO = "MOTO"
 
 
 class Vehiculo(Base):
@@ -35,6 +42,12 @@ class Vehiculo(Base):
     )
     # Normalizada en mayúsculas, sin espacios ni guiones (RN-20).
     placa: Mapped[str] = mapped_column(String(10))
+    # Los registros anteriores a la migración 0006 quedan como carros.
+    tipo: Mapped[TipoVehiculo] = mapped_column(
+        Enum(TipoVehiculo, name="tipo_vehiculo"),
+        default=TipoVehiculo.CARRO,
+        server_default=TipoVehiculo.CARRO.value,
+    )
     marca: Mapped[str] = mapped_column(String(50))
     modelo: Mapped[str] = mapped_column(String(50))
     anio: Mapped[int | None] = mapped_column(SmallInteger)

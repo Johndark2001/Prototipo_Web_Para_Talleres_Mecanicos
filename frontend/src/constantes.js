@@ -29,6 +29,12 @@ export const ESTADOS_ORDEN = {
   CANCELADA: { etiqueta: 'Cancelada', icono: 'cerrar', clase: 'bg-fondo text-texto-suave' },
 }
 
+// Tipo de vehículo (migración 0006). El ícono acompaña siempre al texto.
+export const TIPOS_VEHICULO = {
+  CARRO: { etiqueta: 'Carro', plural: 'carros', icono: 'carro' },
+  MOTO: { etiqueta: 'Moto', plural: 'motos', icono: 'moto' },
+}
+
 // Movimientos de inventario: el signo de la cantidad dice si entró o salió del estante.
 export const TIPOS_MOVIMIENTO = {
   ENTRADA: 'Entrada',

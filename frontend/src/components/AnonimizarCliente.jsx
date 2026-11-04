@@ -56,7 +56,7 @@ export default function AnonimizarCliente({ cliente, alAnonimizar }) {
           evento.preventDefault()
           if (!guardando) setAbierto(false)
         }}
-        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-lg bg-superficie p-0 shadow-lg backdrop:bg-black/40"
+        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-xl bg-superficie p-0 shadow-elevada backdrop:bg-black/40 open:animate-aparecer"
       >
         <form onSubmit={confirmar} noValidate className="flex flex-col gap-3 p-5">
           <h2 className="text-lg font-semibold">¿Anonimizar a {cliente.nombre}?</h2>
@@ -83,7 +83,7 @@ export default function AnonimizarCliente({ cliente, alAnonimizar }) {
             autoComplete="off"
             aria-invalid={Boolean(error)}
             aria-describedby={error ? `${id}-error` : undefined}
-            className={`w-full rounded-md border bg-superficie px-3 py-2 text-base sm:text-sm ${
+            className={`w-full rounded-lg border bg-superficie px-3 py-2 text-base sm:text-sm ${
               error ? 'border-peligro' : 'border-borde'
             }`}
           />

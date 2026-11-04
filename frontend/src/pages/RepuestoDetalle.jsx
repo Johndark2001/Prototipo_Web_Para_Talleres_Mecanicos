@@ -128,7 +128,7 @@ function Movimientos({ repuesto }) {
   }
   return (
     <div className="flex flex-col gap-3">
-      <ul className="divide-y divide-borde rounded-lg border border-borde bg-superficie">
+      <ul className="divide-y divide-borde tarjeta">
         {datos.data.map((m) => {
           const entra = Number(m.cantidad) > 0
           return (
@@ -235,7 +235,7 @@ export default function RepuestoDetalle() {
         </Aviso>
       )}
 
-      <dl className="grid grid-cols-2 gap-4 rounded-lg border border-borde bg-superficie p-4 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-4 tarjeta p-4 sm:grid-cols-4">
         <Dato etiqueta="Stock">
           {formatearCantidad(actual.stock_actual)} {actual.unidad}
         </Dato>

@@ -41,7 +41,7 @@ function FilaRepuesto({ repuesto, enlazar }) {
   return (
     <li>
       {enlazar ? (
-        <Link to={`/inventario/${repuesto.id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-fondo">
+        <Link to={`/inventario/${repuesto.id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-fondo">
           <ContenidoFila repuesto={repuesto} />
           <Icono nombre="derecha" className="size-5 shrink-0 text-texto-suave" />
         </Link>
@@ -86,12 +86,7 @@ export default function Inventario() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Inventario</h1>
-          <p className="text-sm text-texto-suave">
-            {esAdmin ? 'Repuestos del taller. Toque uno para registrar entradas o ajustes.' : 'Repuestos del taller y su stock.'}
-          </p>
-        </div>
+        <h1 className="text-2xl font-semibold">Inventario</h1>
         {esAdmin && (
           <EnlaceBoton to="/inventario/nuevo">
             <Icono nombre="mas" />
@@ -115,7 +110,7 @@ export default function Inventario() {
           placeholder="Nombre o código, p. ej. filtro o W712"
           autoComplete="off"
           maxLength={60}
-          className="min-h-11 w-full rounded-md border border-borde bg-superficie px-3 text-base sm:max-w-md sm:text-sm"
+          className="min-h-11 w-full rounded-lg border border-borde bg-superficie px-3 text-base sm:max-w-md sm:text-sm"
         />
         <label className="inline-flex min-h-11 items-center gap-2 text-sm">
           <input
@@ -167,7 +162,7 @@ export default function Inventario() {
         ))}
 
       {datos?.data.length > 0 && (
-        <ul className="divide-y divide-borde rounded-lg border border-borde bg-superficie">
+        <ul className="divide-y divide-borde tarjeta">
           {datos.data.map((repuesto) => (
             <FilaRepuesto key={repuesto.id} repuesto={repuesto} enlazar={esAdmin} />
           ))}

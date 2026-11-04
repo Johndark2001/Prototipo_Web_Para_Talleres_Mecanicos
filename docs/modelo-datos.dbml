@@ -33,6 +33,11 @@ Enum tipo_movimiento {
   DEVOLUCION
 }
 
+Enum tipo_vehiculo {
+  CARRO
+  MOTO
+}
+
 Table taller {
   id bigint [pk, increment]
   nombre varchar(120) [not null]
@@ -79,6 +84,7 @@ Table vehiculo {
   taller_id bigint [not null, ref: > taller.id]
   cliente_id bigint [not null, ref: > cliente.id, note: 'Dueño actual']
   placa varchar(10) [not null, note: 'Mayúsculas, sin espacios ni guiones (RN-20)']
+  tipo tipo_vehiculo [not null, default: 'CARRO', note: 'Migración 0006 (SPEC §21.9)']
   marca varchar(50) [not null]
   modelo varchar(50) [not null]
   anio smallint [note: 'CHECK anio BETWEEN 1950 AND 2100']

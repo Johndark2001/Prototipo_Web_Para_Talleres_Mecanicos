@@ -197,3 +197,89 @@ def test_anio_invalido_muestra_mensaje_claro(cliente, recepcion_a, ana, valor, m
 
     assert respuesta.status_code == 422
     assert respuesta.json()["error"]["details"] == [{"campo": "anio", "mensaje": mensaje}]
+
+
+# Tipo de vehículo (migración 0006): carro o moto.
+
+
+def test_sin_tipo_se_registra_como_carro(cliente, recepcion_a, ana):
+    respuesta = cliente.post("/api/v1/vehiculos", json=nuevo_vehiculo(ana.id))
+    assert respuesta.status_code == 201
+    assert respuesta.json()["tipo"] == "CARRO"
+
+
+def test_registra_una_moto_y_se_ve_en_el_detalle_del_cliente(cliente, recepcion_a, ana):
+    respuesta = cliente.post(
+        "/api/v1/vehiculos",
+        json=nuevo_vehiculo(ana.id, placa="jkl45d", marca="Yamaha", modelo="FZ", tipo="MOTO"),
+    )
+    assert respuesta.status_code == 201
+    assert respuesta.json()["tipo"] == "MOTO"
+    detalle = cliente.get(f"/api/v1/clientes/{ana.id}").json()
+    assert [v["tipo"] for v in detalle["vehiculos"]] == ["MOTO"]
+
+
+@pytest.mark.parametrize("valor", ["BICICLETA", "moto", None])
+def test_tipo_invalido_responde_422(cliente, recepcion_a, ana, valor):
+    respuesta = cliente.post("/api/v1/vehiculos", json=nuevo_vehiculo(ana.id, tipo=valor))
+    assert respuesta.status_code == 422
+    assert campos_con_error(respuesta) == {"tipo"}
+
+
+def test_editar_el_tipo_y_no_permitir_vaciarlo(cliente, recepcion_a, ana, crear_vehiculo):
+    vehiculo = crear_vehiculo(ana, "JKL45D")
+    assert vehiculo.tipo == "CARRO"
+
+    cambiado = cliente.patch(f"/api/v1/vehiculos/{vehiculo.id}", json={"tipo": "MOTO"})
+    vaciado = cliente.patch(f"/api/v1/vehiculos/{vehiculo.id}", json={"tipo": None})
+
+    assert cambiado.status_code == 200
+    assert cambiado.json()["tipo"] == "MOTO"
+    assert vaciado.status_code == 422
+    assert campos_con_error(vaciado) == {"tipo"}
+
+
+def test_filtro_por_tipo_se_combina_con_placa_e_inactivos(
+    cliente, recepcion_a, ana, crear_vehiculo
+):
+    crear_vehiculo(ana, "ABC123")
+    crear_vehiculo(ana, "ABC12D", tipo="MOTO")
+    crear_vehiculo(ana, "ABD99E", tipo="MOTO", activo=False)
+    crear_vehiculo(ana, "XYZ987")
+
+    def placas(**params):
+        datos = cliente.get("/api/v1/vehiculos", params=params).json()["data"]
+        return [v["placa"] for v in datos]
+
+    assert placas() == ["ABC123", "ABC12D", "ABD99E", "XYZ987"]
+    assert placas(tipo="CARRO") == ["ABC123", "XYZ987"]
+    assert placas(tipo="MOTO") == ["ABC12D", "ABD99E"]
+    assert placas(tipo="MOTO", activo=True) == ["ABC12D"]
+    assert placas(tipo="CARRO", placa="abc") == ["ABC123"]
+    assert placas(tipo="MOTO", placa="abc") == ["ABC12D"]
+    assert placas(placa="abc") == ["ABC123", "ABC12D"]
+    total = cliente.get("/api/v1/vehiculos", params={"tipo": "MOTO"}).json()["pagination"]
+    assert total["total_items"] == 2
+
+
+def test_filtro_por_tipo_invalido_responde_422(cliente, recepcion_a):
+    assert cliente.get("/api/v1/vehiculos", params={"tipo": "CAMION"}).status_code == 422
+
+
+def test_mecanico_filtra_por_tipo_pero_no_lo_cambia(
+    cliente, taller_a, ana, crear_usuario, crear_vehiculo
+):
+    moto = crear_vehiculo(ana, "JKL45D", tipo="MOTO")
+    crear_usuario(taller_a, "mecanico@a.co", rol=RolUsuario.MECANICO)
+    iniciar_sesion(cliente, "mecanico@a.co")
+
+    datos = cliente.get("/api/v1/vehiculos", params={"tipo": "MOTO"}).json()["data"]
+    assert [v["placa"] for v in datos] == ["JKL45D"]
+    assert cliente.patch(f"/api/v1/vehiculos/{moto.id}", json={"tipo": "CARRO"}).status_code == 403
+
+
+def test_filtro_por_tipo_respeta_el_aislamiento(
+    cliente, recepcion_a, ana, taller_b, crear_cliente, crear_vehiculo
+):
+    crear_vehiculo(crear_cliente(taller_b), "ZZZ11Z", tipo="MOTO")
+    assert cliente.get("/api/v1/vehiculos", params={"tipo": "MOTO"}).json()["data"] == []

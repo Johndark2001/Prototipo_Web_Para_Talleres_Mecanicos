@@ -41,7 +41,7 @@ function FormularioUsuario({ alGuardar, alCancelar }) {
     <form
       onSubmit={enviar}
       noValidate
-      className="flex flex-col gap-4 rounded-lg border border-borde bg-superficie p-4"
+      className="flex flex-col gap-4 tarjeta p-4"
       aria-labelledby="titulo-nuevo-usuario"
     >
       <h2 id="titulo-nuevo-usuario" className="text-base font-semibold">
@@ -120,7 +120,7 @@ function FilaUsuario({ usuario, esUsted, alCambiarRol, alCambiarActivo }) {
           value={usuario.rol}
           disabled={esUsted || !usuario.activo}
           onChange={(e) => alCambiarRol(usuario, e.target.value)}
-          className="min-h-11 rounded-md border border-borde bg-superficie px-2 text-sm disabled:opacity-60"
+          className="min-h-11 rounded-lg border border-borde bg-superficie px-2 text-sm disabled:opacity-60"
         >
           {Object.values(ROLES).map((rol) => (
             <option key={rol} value={rol}>
@@ -246,7 +246,7 @@ export default function Usuarios() {
       )}
 
       {resultado && resultado.data.length > 0 && (
-        <ul className="divide-y divide-borde rounded-lg border border-borde bg-superficie">
+        <ul className="divide-y divide-borde tarjeta">
           {resultado.data.map((usuario) => (
             <FilaUsuario
               key={usuario.id}

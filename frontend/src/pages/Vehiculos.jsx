@@ -6,11 +6,13 @@ import Aviso from '../components/Aviso.jsx'
 import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import EtiquetaActivo from '../components/EtiquetaActivo.jsx'
+import EtiquetaTipo from '../components/EtiquetaTipo.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
+import FiltroTipoVehiculo from '../components/FiltroTipoVehiculo.jsx'
 import Icono from '../components/Icono.jsx'
 import Paginacion from '../components/Paginacion.jsx'
 import Placa from '../components/Placa.jsx'
-import { ROLES_EDITAN_CLIENTES } from '../constantes.js'
+import { ROLES_EDITAN_CLIENTES, TIPOS_VEHICULO } from '../constantes.js'
 import { describirVehiculo, normalizarPlaca } from '../formato.js'
 import { useConsulta } from '../hooks/useConsulta.js'
 import { useRetrasado } from '../hooks/useRetrasado.js'
@@ -23,11 +25,14 @@ function FilaVehiculo({ vehiculo }) {
     <li>
       <Link
         to={`/vehiculos/${vehiculo.id}`}
-        className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-fondo"
+        className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-fondo"
       >
         <Placa placa={vehiculo.placa} />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{describirVehiculo(vehiculo)}</p>
+          <p className="flex min-w-0 items-center gap-2">
+            <span className="truncate font-medium">{describirVehiculo(vehiculo)}</span>
+            <EtiquetaTipo tipo={vehiculo.tipo} />
+          </p>
           <p className="truncate text-sm text-texto-suave">Dueño: {vehiculo.cliente.nombre}</p>
         </div>
         {!vehiculo.activo && <EtiquetaActivo activo={false} />}
@@ -51,12 +56,16 @@ export default function Vehiculos() {
   }
   const busqueda = useRetrasado(normalizarPlaca(texto))
   const verInactivos = parametros.get('inactivos') === '1'
+  const tipo = TIPOS_VEHICULO[parametros.get('tipo')] ? parametros.get('tipo') : null
+  // Palabra para los mensajes según el filtro: «vehículos», «carros» o «motos».
+  const plural = tipo ? TIPOS_VEHICULO[tipo].plural : 'vehículos'
   const pagina = Number(parametros.get('pagina') ?? 1)
 
   const { datos, error, recargar } = useConsulta(
     conParametros('/vehiculos', {
       placa: busqueda,
       activo: verInactivos ? undefined : true,
+      tipo: tipo ?? undefined,
       page: pagina,
       page_size: TAMANO_PAGINA,
     }),
@@ -81,19 +90,20 @@ export default function Vehiculos() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Vehículos</h1>
-          <p className="text-sm text-texto-suave">Carros y motos registrados en el taller.</p>
-        </div>
+        <h1 className="text-2xl font-semibold">Vehículos</h1>
         {puedeEditar && (
-          <EnlaceBoton to="/vehiculos/nuevo">
+          <EnlaceBoton to="/vehiculos/nuevo" state={tipo ? { tipo } : undefined}>
             <Icono nombre="mas" />
-            Carro
+            Vehículo
           </EnlaceBoton>
         )}
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <FiltroTipoVehiculo
+          valor={tipo}
+          alCambiar={(nuevo) => cambiarParametros({ tipo: nuevo, pagina: null })}
+        />
         <label htmlFor="filtro-placa" className="sr-only">
           Buscar por placa
         </label>
@@ -106,7 +116,7 @@ export default function Vehiculos() {
           autoComplete="off"
           autoCapitalize="characters"
           maxLength={12}
-          className="min-h-11 w-full rounded-md border border-borde bg-superficie px-3 font-mono text-base uppercase placeholder:font-sans placeholder:normal-case sm:max-w-md sm:text-sm"
+          className="min-h-11 w-full rounded-lg border border-borde bg-superficie px-3 font-mono text-base uppercase placeholder:font-sans placeholder:normal-case sm:max-w-md sm:text-sm"
         />
         <label className="inline-flex min-h-11 items-center gap-2 text-sm">
           <input
@@ -134,11 +144,11 @@ export default function Vehiculos() {
         (busqueda ? (
           <EstadoVacio
             icono="buscar"
-            titulo={`No hay carros con la placa «${busqueda}»`}
-            texto={puedeEditar ? 'Si es un carro nuevo en el taller, regístrelo.' : undefined}
+            titulo={`No hay ${plural} con la placa «${busqueda}»`}
+            texto={puedeEditar ? 'Si es un vehículo nuevo en el taller, regístrelo.' : undefined}
           >
             {puedeEditar && (
-              <EnlaceBoton to="/vehiculos/nuevo" state={{ placa: busqueda }}>
+              <EnlaceBoton to="/vehiculos/nuevo" state={{ placa: busqueda, tipo: tipo ?? undefined }}>
                 <Icono nombre="mas" />
                 Registrar {busqueda}
               </EnlaceBoton>
@@ -146,14 +156,14 @@ export default function Vehiculos() {
           </EstadoVacio>
         ) : (
           <EstadoVacio
-            icono="carro"
-            titulo="Aún no hay carros registrados"
-            texto="Cada carro se registra a nombre de un cliente. Empiece por el cliente o use «+ Carro»."
+            icono={tipo ? TIPOS_VEHICULO[tipo].icono : 'carro'}
+            titulo={`Aún no hay ${plural} ${tipo === 'MOTO' ? 'registradas' : 'registrados'}`}
+            texto="Cada vehículo se registra a nombre de un cliente. Empiece por el cliente o use «+ Vehículo»."
           />
         ))}
 
       {datos?.data.length > 0 && (
-        <ul className="divide-y divide-borde rounded-lg border border-borde bg-superficie">
+        <ul className="divide-y divide-borde tarjeta">
           {datos.data.map((vehiculo) => (
             <FilaVehiculo key={vehiculo.id} vehiculo={vehiculo} />
           ))}

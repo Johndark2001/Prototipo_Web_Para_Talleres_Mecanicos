@@ -11,7 +11,7 @@ export default function TarjetaOrden({ orden, mostrarVehiculo = true }) {
     <li>
       <Link
         to={`/ordenes/${orden.id}`}
-        className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-fondo"
+        className="flex min-h-16 items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-fondo"
       >
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">

@@ -40,7 +40,7 @@ export default function ListaOrdenes({ filtros, vacio, mostrarVehiculo = true, t
 
   return (
     <div className="flex flex-col gap-3">
-      <ul className="divide-y divide-borde rounded-lg border border-borde bg-superficie">
+      <ul className="divide-y divide-borde tarjeta">
         {datos.data.map((orden) => (
           <TarjetaOrden key={orden.id} orden={orden} mostrarVehiculo={mostrarVehiculo} />
         ))}

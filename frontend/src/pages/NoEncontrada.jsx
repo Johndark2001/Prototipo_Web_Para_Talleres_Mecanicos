@@ -1,5 +1,4 @@
-import { Link } from 'react-router'
-
+import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 
 export default function NoEncontrada() {
@@ -10,9 +9,7 @@ export default function NoEncontrada() {
         titulo="Esta página no existe"
         texto="Revise la dirección o vuelva al inicio."
       >
-        <Link to="/" className="font-semibold text-primario underline">
-          Ir al inicio
-        </Link>
+        <EnlaceBoton to="/">Ir al inicio</EnlaceBoton>
       </EstadoVacio>
     </main>
   )

@@ -29,12 +29,7 @@ export default function Ordenes() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{esMecanico ? 'Mis órdenes' : 'Órdenes de trabajo'}</h1>
-          <p className="text-sm text-texto-suave">
-            {esMecanico ? 'Los carros que le asignaron.' : 'Los carros que entraron al taller.'}
-          </p>
-        </div>
+        <h1 className="text-2xl font-semibold">{esMecanico ? 'Mis órdenes' : 'Órdenes de trabajo'}</h1>
         {puedeAbrir && (
           <EnlaceBoton to="/ordenes/nueva">
             <Icono nombre="mas" />
@@ -51,7 +46,7 @@ export default function Ordenes() {
           id="filtro-estado"
           value={filtro}
           onChange={(e) => setParametros(e.target.value === 'abiertas' ? {} : { filtro: e.target.value }, { replace: true })}
-          className="min-h-11 rounded-md border border-borde bg-superficie px-3 text-base sm:max-w-xs sm:text-sm"
+          className="min-h-11 rounded-lg border border-borde bg-superficie px-3 text-base sm:max-w-xs sm:text-sm"
         >
           {FILTROS.map((f) => (
             <option key={f.valor} value={f.valor}>

@@ -7,6 +7,7 @@ import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import ErrorCarga from '../components/ErrorCarga.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import EtiquetaActivo from '../components/EtiquetaActivo.jsx'
+import EtiquetaTipo from '../components/EtiquetaTipo.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
 import Placa from '../components/Placa.jsx'
@@ -27,18 +28,19 @@ function Dato({ etiqueta, children }) {
 
 function ListaVehiculos({ vehiculos }) {
   return (
-    <ul className="divide-y divide-borde rounded-lg border border-borde bg-superficie">
+    <ul className="divide-y divide-borde tarjeta">
       {vehiculos.map((vehiculo) => (
         <li key={vehiculo.id}>
           <Link
             to={`/vehiculos/${vehiculo.id}`}
-            className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-fondo"
+            className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-fondo"
           >
             <Placa placa={vehiculo.placa} />
             <span className="min-w-0 flex-1 truncate">
               {describirVehiculo(vehiculo)}
               {vehiculo.color && <span className="text-texto-suave"> · {vehiculo.color}</span>}
             </span>
+            <EtiquetaTipo tipo={vehiculo.tipo} />
             {!vehiculo.activo && <EtiquetaActivo activo={false} />}
             <Icono nombre="derecha" className="size-5 shrink-0 text-texto-suave" />
           </Link>
@@ -122,7 +124,7 @@ export default function ClienteDetalle() {
         </Aviso>
       )}
 
-      <dl className="grid gap-4 rounded-lg border border-borde bg-superficie p-4 sm:grid-cols-2">
+      <dl className="grid gap-4 tarjeta p-4 sm:grid-cols-2">
         <Dato etiqueta="Teléfono">
           {cliente.telefono && (
             <a href={`tel:${cliente.telefono}`} className="text-primario underline">
@@ -138,11 +140,11 @@ export default function ClienteDetalle() {
       </dl>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Carros</h2>
+        <h2 className="text-lg font-semibold">Vehículos</h2>
         {puedeEditar && cliente.activo && (
           <EnlaceBoton to={`/vehiculos/nuevo?cliente=${cliente.id}`}>
             <Icono nombre="mas" />
-            Carro
+            Vehículo
           </EnlaceBoton>
         )}
       </div>
@@ -150,8 +152,8 @@ export default function ClienteDetalle() {
       {cliente.vehiculos.length === 0 ? (
         <EstadoVacio
           icono="carro"
-          titulo="Este cliente no tiene carros registrados"
-          texto={puedeEditar && cliente.activo ? 'Registre su carro con el botón «+ Carro».' : undefined}
+          titulo="Este cliente no tiene vehículos registrados"
+          texto={puedeEditar && cliente.activo ? 'Registre su carro o su moto con el botón «+ Vehículo».' : undefined}
         />
       ) : (
         <ListaVehiculos vehiculos={cliente.vehiculos} />

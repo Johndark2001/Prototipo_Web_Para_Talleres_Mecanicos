@@ -14,7 +14,7 @@ export default function CampoFormulario({
   const idAyuda = ayuda ? `${id}-ayuda` : undefined
   const idError = error ? `${id}-error` : undefined
   const descripcion = [idAyuda, idError].filter(Boolean).join(' ') || undefined
-  const estilo = `min-h-11 w-full rounded-md border bg-superficie px-3 text-base sm:text-sm ${
+  const estilo = `min-h-11 w-full rounded-lg border bg-superficie px-3 text-base sm:text-sm ${
     error ? 'border-peligro' : 'border-borde'
   }`
 

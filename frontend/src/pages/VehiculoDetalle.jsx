@@ -6,11 +6,12 @@ import CambioActivo from '../components/CambioActivo.jsx'
 import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import ErrorCarga from '../components/ErrorCarga.jsx'
 import EtiquetaActivo from '../components/EtiquetaActivo.jsx'
+import EtiquetaTipo from '../components/EtiquetaTipo.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
 import ListaOrdenes from '../components/ListaOrdenes.jsx'
 import Placa from '../components/Placa.jsx'
-import { ROLES_EDITAN_CLIENTES } from '../constantes.js'
+import { ROLES_EDITAN_CLIENTES, TIPOS_VEHICULO } from '../constantes.js'
 import { describirVehiculo, formatearTelefono } from '../formato.js'
 import { useAvisoNavegacion } from '../hooks/useAvisoNavegacion.js'
 import { useConsulta } from '../hooks/useConsulta.js'
@@ -33,7 +34,7 @@ function AccesoOrden({ vehiculoId }) {
   return (
     <EnlaceBoton to={`/ordenes/nueva?vehiculo=${vehiculoId}`}>
       <Icono nombre="mas" />
-      Nueva orden para este carro
+      Nueva orden para este vehículo
     </EnlaceBoton>
   )
 }
@@ -46,8 +47,10 @@ export default function VehiculoDetalle() {
   const [aviso, setAviso] = useAvisoNavegacion()
 
   if (error) return <ErrorCarga error={error} recurso="vehiculo" alReintentar={recargar} />
-  if (!vehiculo || cargando) return <Esqueleto etiqueta="Cargando carro" />
+  if (!vehiculo || cargando) return <Esqueleto etiqueta="Cargando vehículo" />
   const { cliente } = vehiculo
+  const tipo = TIPOS_VEHICULO[vehiculo.tipo] ?? TIPOS_VEHICULO.CARRO
+  const esMoto = vehiculo.tipo === 'MOTO'
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -61,13 +64,16 @@ export default function VehiculoDetalle() {
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-2">
-          <h1 className="sr-only">Carro de placa {vehiculo.placa}</h1>
+          <h1 className="sr-only">
+            {tipo.etiqueta} de placa {vehiculo.placa}
+          </h1>
           <Placa placa={vehiculo.placa} grande />
           <p className="text-lg font-medium">
             {describirVehiculo(vehiculo)}
             {vehiculo.color && <span className="text-texto-suave"> · {vehiculo.color}</span>}
           </p>
-          <div>
+          <div className="flex flex-wrap gap-2">
+            <EtiquetaTipo tipo={vehiculo.tipo} />
             <EtiquetaActivo activo={vehiculo.activo} />
           </div>
         </div>
@@ -80,7 +86,7 @@ export default function VehiculoDetalle() {
             <CambioActivo
               ruta={`/vehiculos/${vehiculo.id}`}
               activo={vehiculo.activo}
-              nombre={`el carro ${vehiculo.placa}`}
+              nombre={`${esMoto ? 'la moto' : 'el carro'} ${vehiculo.placa}`}
               mensajeDesactivar="Dejará de aparecer en las búsquedas. Su historial se conserva y puede activarlo de nuevo."
               alCambiar={(actualizado, mensaje) => {
                 setAviso(mensaje)
@@ -99,7 +105,7 @@ export default function VehiculoDetalle() {
 
       <section
         aria-labelledby="titulo-dueno"
-        className="flex flex-col gap-1 rounded-lg border border-borde bg-superficie p-4"
+        className="flex flex-col gap-1 tarjeta p-4"
       >
         <h2 id="titulo-dueno" className="text-xs font-medium uppercase tracking-wide text-texto-suave">
           Dueño
@@ -126,7 +132,7 @@ export default function VehiculoDetalle() {
         filtros={{ vehiculo_id: vehiculo.id }}
         mostrarVehiculo={false}
         vacio={{
-          titulo: 'Este carro todavía no tiene órdenes',
+          titulo: `${esMoto ? 'Esta moto' : 'Este carro'} todavía no tiene órdenes`,
           texto: 'Aquí aparecerán sus órdenes de trabajo: fecha, motivo, mecánico y estado.',
         }}
       />

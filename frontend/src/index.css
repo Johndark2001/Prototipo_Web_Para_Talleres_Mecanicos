@@ -5,10 +5,10 @@
 @theme {
   --color-primario: #0f766e;
   --color-primario-oscuro: #115e59;
-  --color-primario-suave: #f0fdfa;
-  --color-fondo: #f8fafc;
+  --color-primario-suave: #ecfdf8;
+  --color-fondo: #f3f6f5;
   --color-superficie: #ffffff;
-  --color-borde: #e2e8f0;
+  --color-borde: #dfe5e3;
   --color-texto: #0f172a;
   --color-texto-suave: #475569;
   --color-peligro: #b91c1c;
@@ -19,7 +19,61 @@
   --color-aviso-suave: #fffbeb;
   --color-placa: #facc15;
 
+  /* Navegación lateral: tinta verde petróleo, el color del taller. */
+  --color-lateral: #0d2f2c;
+  --color-lateral-borde: #1d4541;
+  --color-lateral-texto: #b9cdc9;
+  --color-lateral-activo: #5eead4;
+
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Sombras suaves con desplazamiento: dan profundidad sin parecer flotantes. */
+  --shadow-tarjeta: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.05);
+  --shadow-elevada: 0 2px 4px rgb(15 23 42 / 0.05), 0 8px 20px -6px rgb(15 23 42 / 0.12);
+  --shadow-boton: 0 1px 2px rgb(15 23 42 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.12);
+
+  /* Curvas de salida fuertes: responden al instante (las de CSS se sienten lentas). */
+  --ease-salida: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-movimiento: cubic-bezier(0.77, 0, 0.175, 1);
+
+  --animate-aparecer: aparecer 320ms var(--ease-salida) both;
+  --animate-girar-lento: girar 40s linear infinite;
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes girar {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+/* Superficie única para tarjetas, listas y paneles. */
+@utility tarjeta {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-borde);
+  background-color: var(--color-superficie);
+  box-shadow: var(--shadow-tarjeta);
+}
+
+/* Fondos del taller: cabezas de tornillo hexagonales, muy tenues, para zonas decorativas. */
+@utility fondo-plano {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='rgba%28255%2C255%2C255%2C0.07%29' stroke-width='1.2'%3E%3Cpath d='M28 21l6 3.5v7L28 35l-6-3.5v-7z'/%3E%3Ccircle cx='28' cy='28' r='2.4'/%3E%3C/g%3E%3Cg fill='rgba%28255%2C255%2C255%2C0.07%29'%3E%3Ccircle cx='0' cy='0' r='1.2'/%3E%3Ccircle cx='56' cy='0' r='1.2'/%3E%3Ccircle cx='0' cy='56' r='1.2'/%3E%3Ccircle cx='56' cy='56' r='1.2'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 56px 56px;
+}
+
+@utility fondo-plano-claro {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='rgba%2815%2C118%2C110%2C0.09%29' stroke-width='1.2'%3E%3Cpath d='M28 21l6 3.5v7L28 35l-6-3.5v-7z'/%3E%3Ccircle cx='28' cy='28' r='2.4'/%3E%3C/g%3E%3Cg fill='rgba%2815%2C118%2C110%2C0.09%29'%3E%3Ccircle cx='0' cy='0' r='1.2'/%3E%3Ccircle cx='56' cy='0' r='1.2'/%3E%3Ccircle cx='0' cy='56' r='1.2'/%3E%3Ccircle cx='56' cy='56' r='1.2'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 56px 56px;
 }
 
 @layer base {
@@ -31,7 +85,49 @@
     @apply bg-fondo text-texto antialiased;
   }
 
+  h1 {
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: rgb(15 118 110 / 0.18);
+  }
+
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-primario;
+  }
+
+  /* Campos de texto: el foco se ve en el propio borde, sin anillo separado. */
+  input:not([type="checkbox"], [type="radio"]),
+  select,
+  textarea {
+    transition:
+      border-color 150ms var(--ease-salida),
+      box-shadow 150ms var(--ease-salida);
+  }
+
+  input:not([type="checkbox"], [type="radio"]):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline-offset: 0;
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px rgb(15 118 110 / 0.14);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--color-primario);
+  }
+
+  /* Quien pidió menos movimiento no ve animaciones ni transiciones. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

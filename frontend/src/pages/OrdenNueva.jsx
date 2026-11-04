@@ -46,7 +46,7 @@ function Formulario({ vehiculoInicial }) {
   const ordenAbierta = error?.status === 409 ? error.details?.orden_id : null
 
   return (
-    <form onSubmit={enviar} noValidate className="flex flex-col gap-4 rounded-lg border border-borde bg-superficie p-4">
+    <form onSubmit={enviar} noValidate className="flex flex-col gap-4 tarjeta p-4">
       {error && (
         <Aviso tipo="error">
           {error.message}

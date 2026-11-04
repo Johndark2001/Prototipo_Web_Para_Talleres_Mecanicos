@@ -22,7 +22,7 @@ function FilaCliente({ cliente }) {
     <li>
       <Link
         to={`/clientes/${cliente.id}`}
-        className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-fondo"
+        className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-fondo"
       >
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{cliente.nombre}</p>
@@ -73,14 +73,11 @@ export default function Clientes() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Clientes</h1>
-          <p className="text-sm text-texto-suave">Dueños de los carros que atiende el taller.</p>
-        </div>
+        <h1 className="text-2xl font-semibold">Clientes</h1>
         {puedeEditar && (
           <Link
             to="/clientes/nuevo"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primario px-4 text-sm font-semibold text-white hover:bg-primario-oscuro"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primario px-4 text-sm font-semibold text-white hover:bg-primario-oscuro"
           >
             <Icono nombre="mas" />
             Cliente
@@ -99,7 +96,7 @@ export default function Clientes() {
           onChange={escribir}
           placeholder="Buscar por nombre, teléfono o documento"
           autoComplete="off"
-          className="min-h-11 w-full rounded-md border border-borde bg-superficie px-3 text-base sm:max-w-md sm:text-sm"
+          className="min-h-11 w-full rounded-lg border border-borde bg-superficie px-3 text-base sm:max-w-md sm:text-sm"
         />
         <label className="inline-flex min-h-11 items-center gap-2 text-sm">
           <input
@@ -143,7 +140,7 @@ export default function Clientes() {
         ))}
 
       {datos?.data.length > 0 && (
-        <ul className="divide-y divide-borde rounded-lg border border-borde bg-superficie">
+        <ul className="divide-y divide-borde tarjeta">
           {datos.data.map((cliente) => (
             <FilaCliente key={cliente.id} cliente={cliente} />
           ))}

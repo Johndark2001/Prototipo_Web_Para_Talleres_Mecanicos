@@ -1,9 +1,4 @@
-const VARIANTES = {
-  primario: 'bg-primario text-white hover:bg-primario-oscuro',
-  secundario: 'bg-superficie text-texto border border-borde hover:bg-fondo',
-  peligro: 'bg-peligro text-white hover:opacity-90',
-  texto: 'text-primario hover:bg-primario-suave',
-}
+import { claseBoton } from './estilosBoton.js'
 
 /** Botón único del sistema (SPEC §11: BotonPrimario y variantes). */
 export default function Boton({
@@ -20,7 +15,7 @@ export default function Boton({
       type={type}
       disabled={disabled || cargando}
       aria-busy={cargando || undefined}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTES[variante]} ${className}`}
+      className={claseBoton(variante, className)}
       {...props}
     >
       {cargando && (

@@ -5,6 +5,7 @@ import { api, erroresPorCampo } from '../api/cliente.js'
 import Aviso from '../components/Aviso.jsx'
 import ChipEstado from '../components/ChipEstado.jsx'
 import ErrorCarga from '../components/ErrorCarga.jsx'
+import EtiquetaTipo from '../components/EtiquetaTipo.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
 import Placa from '../components/Placa.jsx'
@@ -91,6 +92,7 @@ function VistaOrden({ ordenInicial }) {
             <Placa placa={vehiculo.placa} />
             <span className="font-medium">{describirVehiculo(vehiculo)}</span>
           </Link>
+          <EtiquetaTipo tipo={vehiculo.tipo} />
           <span className="inline-flex items-center gap-1 text-texto-suave">
             <Icono nombre="cliente" className="size-4" />
             <Link to={`/clientes/${cliente.id}`} className="hover:underline">
@@ -114,7 +116,7 @@ function VistaOrden({ ordenInicial }) {
         </Aviso>
       )}
 
-      <div className="rounded-lg border border-borde bg-superficie p-4">
+      <div className="tarjeta p-4">
         <LineaTiempo estado={orden.estado} historial={orden.historial} />
       </div>
 
