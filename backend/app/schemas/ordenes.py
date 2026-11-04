@@ -33,6 +33,10 @@ Kilometraje = Annotated[
 ]
 TextoLargo = texto_opcional(5000)
 Nota = texto_opcional(1000)
+# Cambio #5. La categoría se valida contra el catálogo del tipo de vehículo en el servicio.
+Categoria = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+DetalleOtro = texto_opcional(120)
+Observacion = texto_opcional(2000)
 
 
 def _no_en_el_pasado(valor: date | None) -> date | None:
@@ -47,10 +51,19 @@ FechaEstimada = Annotated[
 
 
 class OrdenCrear(BaseModel):
-    """Recepción (RF-05): el carro, el motivo y, si ya se sabe, el mecánico."""
+    """Recepción (RF-05): el vehículo, el problema y, si ya se sabe, el mecánico.
+
+    El problema se registra con `categoria_problema` (catálogo según el tipo de vehículo),
+    `categoria_otro` (obligatorio si la categoría es "Otro") y `observacion_cliente`. Quien
+    todavía envíe solo `motivo_ingreso` (texto libre, como antes del cambio #5) sigue siendo
+    aceptado; se exige uno de los dos.
+    """
 
     vehiculo_id: int
-    motivo_ingreso: MotivoIngreso
+    categoria_problema: Categoria | None = None
+    categoria_otro: DetalleOtro = None
+    observacion_cliente: Observacion = None
+    motivo_ingreso: MotivoIngreso | None = None
     kilometraje: Kilometraje = None
     fecha_entrega_estimada: FechaEstimada = None
     mecanico_id: int | None = None
@@ -62,10 +75,15 @@ class OrdenActualizar(BaseModel):
     diagnostico: TextoLargo = None
     trabajo_realizado: TextoLargo = None
     motivo_ingreso: MotivoIngreso | None = None
+    categoria_problema: Categoria | None = None
+    categoria_otro: DetalleOtro = None
+    observacion_cliente: Observacion = None
     kilometraje: Kilometraje = None
     fecha_entrega_estimada: FechaEstimada = None
 
-    _obligatorios = field_validator("motivo_ingreso", mode="before")(rechazar_nulo)
+    _obligatorios = field_validator("motivo_ingreso", "categoria_problema", mode="before")(
+        rechazar_nulo
+    )
 
 
 class CambioEstado(BaseModel):
@@ -193,6 +211,9 @@ class Liquidacion(BaseModel):
 
 
 class OrdenDetalle(OrdenResumen):
+    categoria_problema: str | None
+    categoria_otro: str | None
+    observacion_cliente: str | None
     diagnostico: str | None
     trabajo_realizado: str | None
     motivo_cancelacion: str | None

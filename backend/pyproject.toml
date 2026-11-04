@@ -13,6 +13,7 @@ dependencies = [
     "email-validator>=2.2",
     "pyjwt>=2.10",
     "argon2-cffi>=23.1",
+    "fpdf2>=2.8",
 ]
 
 [dependency-groups]

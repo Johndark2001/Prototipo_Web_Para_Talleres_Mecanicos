@@ -21,6 +21,7 @@ from app.models import (
     Vehiculo,
 )
 from app.schemas.ordenes import AsignacionCrear, CambioEstado, OrdenActualizar, OrdenCrear
+from app.services import categorias as servicio_categorias
 from app.services import inventario as servicio_inventario
 from app.services import usuarios as servicio_usuarios
 from app.services import vehiculos as servicio_vehiculos
@@ -28,6 +29,7 @@ from app.services.flujo_orden import transicion_existe, transiciones_posibles
 
 RESTRICCION_ORDEN_ABIERTA = "uq_orden_vehiculo_abierta"
 CAMPOS_DEL_MECANICO = {"diagnostico", "trabajo_realizado"}
+CAMPOS_DEL_PROBLEMA = {"categoria_problema", "categoria_otro", "observacion_cliente"}
 ROLES_RECEPCION = (RolUsuario.ADMIN, RolUsuario.RECEPCION)
 NOMBRES_ESTADO = {
     EstadoOrden.RECIBIDO: "Recibido",
@@ -184,6 +186,34 @@ def _conflicto_orden_abierta(placa: str, abierta: OrdenTrabajo | None) -> Confli
     )
 
 
+def _problema_de_ingreso(
+    vehiculo: Vehiculo,
+    categoria: str | None,
+    otro: str | None,
+    observacion: str | None,
+    motivo: str | None,
+) -> dict:
+    """Categoría, detalle, observación y el motivo compuesto que se guardan (cambio #5)."""
+    if categoria is None:
+        if motivo is None:
+            raise DatosInvalidos("categoria_problema", "Elija la categoría del problema")
+        # Forma anterior al catálogo: el texto libre también queda como observación.
+        return {
+            "categoria_problema": None,
+            "categoria_otro": None,
+            "observacion_cliente": observacion or motivo,
+            "motivo_ingreso": motivo,
+        }
+    categoria, otro = servicio_categorias.validar(vehiculo.tipo, categoria, otro)
+    return {
+        "categoria_problema": categoria,
+        "categoria_otro": otro,
+        "observacion_cliente": observacion,
+        "motivo_ingreso": motivo
+        or servicio_categorias.componer_motivo(categoria, otro, observacion),
+    }
+
+
 def crear(db: Session, actual: Usuario, datos: OrdenCrear) -> OrdenTrabajo:
     vehiculo = servicio_vehiculos.obtener(db, actual, datos.vehiculo_id)
     if not vehiculo.activo:
@@ -196,6 +226,13 @@ def crear(db: Session, actual: Usuario, datos: OrdenCrear) -> OrdenTrabajo:
     if abierta is not None:
         raise _conflicto_orden_abierta(vehiculo.placa, abierta)
     mecanico = _mecanico_valido(db, actual, datos.mecanico_id) if datos.mecanico_id else None
+    problema = _problema_de_ingreso(
+        vehiculo,
+        datos.categoria_problema,
+        datos.categoria_otro,
+        datos.observacion_cliente,
+        datos.motivo_ingreso,
+    )
 
     # RN-12: el bloqueo de la fila del taller hace que dos recepciones simultáneas
     # no reciban el mismo número.
@@ -214,7 +251,7 @@ def crear(db: Session, actual: Usuario, datos: OrdenCrear) -> OrdenTrabajo:
         codigo_seguimiento=secrets.token_urlsafe(16),
         estado=EstadoOrden.RECIBIDO,
         kilometraje=datos.kilometraje,
-        motivo_ingreso=datos.motivo_ingreso,
+        **problema,
         fecha_entrega_estimada=datos.fecha_entrega_estimada,
     )
     orden.historial.append(
@@ -239,6 +276,26 @@ def actualizar(db: Session, actual: Usuario, orden_id: int, datos: OrdenActualiz
     cambios = datos.model_dump(exclude_unset=True)
     if actual.rol == RolUsuario.MECANICO and set(cambios) - CAMPOS_DEL_MECANICO:
         raise SinPermiso("El mecánico solo registra el diagnóstico y el trabajo realizado")
+
+    if cambios.keys() & CAMPOS_DEL_PROBLEMA:
+        # Lo que no se envía se conserva; el motivo se recompone salvo que llegue escrito.
+        nuevo = {
+            campo: cambios.pop(campo) if campo in cambios else getattr(orden, campo)
+            for campo in CAMPOS_DEL_PROBLEMA
+        }
+        if nuevo["categoria_problema"] is None:
+            # Orden anterior al catálogo a la que solo se le corrige la observación.
+            orden.observacion_cliente = nuevo["observacion_cliente"]
+        else:
+            problema = _problema_de_ingreso(
+                orden.vehiculo,
+                nuevo["categoria_problema"],
+                nuevo["categoria_otro"],
+                nuevo["observacion_cliente"],
+                cambios.pop("motivo_ingreso", None),
+            )
+            for campo, valor in problema.items():
+                setattr(orden, campo, valor)
 
     for campo, valor in cambios.items():
         setattr(orden, campo, valor)

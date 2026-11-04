@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 
 from app.api.deps import DB
+from app.api.ordenes import respuesta_pdf
 from app.core.errores import DemasiadasSolicitudes
 from app.core.limites import LimitadorSolicitudes
 from app.schemas.seguimiento import (
@@ -9,7 +10,7 @@ from app.schemas.seguimiento import (
     SeguimientoSalida,
     ServicioPublico,
 )
-from app.services import liquidacion
+from app.services import informe_pdf, liquidacion
 from app.services import seguimiento as servicio
 
 router = APIRouter(prefix="/seguimiento", tags=["seguimiento público"])
@@ -19,11 +20,29 @@ router = APIRouter(prefix="/seguimiento", tags=["seguimiento público"])
 limitador = LimitadorSolicitudes(maximo=30, ventana_segundos=60)
 
 
+def _limitar(request: Request) -> None:
+    if not limitador.permitir(request.client.host if request.client else "desconocido"):
+        raise DemasiadasSolicitudes("Demasiadas consultas seguidas. Espere un minuto.")
+
+
+@router.get(
+    "/{codigo}/informe.pdf",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def descargar_informe(codigo: str, request: Request, db: DB) -> Response:
+    """Informe final de una orden ENTREGADA, sin datos personales del cliente (ADR-005)."""
+    _limitar(request)
+    orden = servicio.obtener_por_codigo(db, codigo)
+    return respuesta_pdf(
+        informe_pdf.generar(orden, publico=True), informe_pdf.nombre_archivo(orden)
+    )
+
+
 @router.get("/{codigo}", response_model=SeguimientoSalida)
 def ver_seguimiento(codigo: str, request: Request, db: DB) -> SeguimientoSalida:
     """Sin sesión: el código aleatorio del enlace es la única llave."""
-    if not limitador.permitir(request.client.host if request.client else "desconocido"):
-        raise DemasiadasSolicitudes("Demasiadas consultas seguidas. Espere un minuto.")
+    _limitar(request)
 
     orden = servicio.obtener_por_codigo(db, codigo)
     return SeguimientoSalida(

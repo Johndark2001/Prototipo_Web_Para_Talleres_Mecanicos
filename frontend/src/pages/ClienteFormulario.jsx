@@ -1,15 +1,17 @@
 import { useId, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 
 import { api, erroresPorCampo } from '../api/cliente.js'
 import Aviso from '../components/Aviso.jsx'
 import Boton from '../components/Boton.jsx'
 import CampoFormulario from '../components/CampoFormulario.jsx'
+import CamposVehiculo from '../components/CamposVehiculo.jsx'
 import EnlaceBoton from '../components/EnlaceBoton.jsx'
 import ErrorCarga from '../components/ErrorCarga.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
-import { formatearFecha } from '../formato.js'
+import { VEHICULO_VACIO } from '../constantes.js'
+import { formatearFecha, normalizarPlaca } from '../formato.js'
 import { useConsulta } from '../hooks/useConsulta.js'
 
 const VACIO = { nombre: '', telefono: '', email: '', documento: '', autoriza_datos: false }
@@ -49,9 +51,19 @@ function CasillaAutorizacion({ marcada, alCambiar, error }) {
   )
 }
 
-function Formulario({ inicial }) {
+/** Errores del alta conjunta: «vehiculo.placa» → { placa } para los campos del vehículo. */
+function separarErrores(errores) {
+  const cliente = {}
+  const vehiculo = {}
+  for (const [campo, mensaje] of Object.entries(errores)) {
+    if (campo.startsWith('vehiculo.')) vehiculo[campo.slice('vehiculo.'.length)] = mensaje
+    else cliente[campo] = mensaje
+  }
+  return { cliente, vehiculo }
+}
+
+function Formulario({ inicial, vehiculoInicial }) {
   const navegar = useNavigate()
-  const [parametros] = useSearchParams()
   const esNuevo = !inicial.id
   const [datos, setDatos] = useState({
     ...VACIO,
@@ -59,9 +71,14 @@ function Formulario({ inicial }) {
     email: inicial.email ?? '',
     documento: inicial.documento ?? '',
   })
+  // Cambio #6: el primer vehículo se registra con el cliente, en la misma operación.
+  const [vehiculo, setVehiculo] = useState({ ...VEHICULO_VACIO, ...vehiculoInicial })
+  const [sinVehiculo, setSinVehiculo] = useState(false)
   const [errores, setErrores] = useState({})
+  const [erroresVehiculo, setErroresVehiculo] = useState({})
   const [errorGeneral, setErrorGeneral] = useState(null)
   const [guardando, setGuardando] = useState(false)
+  const conVehiculo = esNuevo && !sinVehiculo
 
   const cambiar = (campo) => (evento) => setDatos({ ...datos, [campo]: evento.target.value })
   const volverA = esNuevo ? '/clientes' : `/clientes/${inicial.id}`
@@ -69,25 +86,48 @@ function Formulario({ inicial }) {
   async function enviar(evento) {
     evento.preventDefault()
     setErrores({})
+    setErroresVehiculo({})
     setErrorGeneral(null)
     setGuardando(true)
     const { nombre, telefono, email, documento } = datos
+    const cuerpoVehiculo = conVehiculo
+      ? { ...vehiculo, anio: vehiculo.anio === '' ? null : Number(vehiculo.anio) }
+      : null
     try {
       const guardado = esNuevo
-        ? await api.post('/clientes', { nombre, telefono, email, documento, autoriza_datos: datos.autoriza_datos })
+        ? await api.post('/clientes', {
+            nombre,
+            telefono,
+            email,
+            documento,
+            autoriza_datos: datos.autoriza_datos,
+            vehiculo: cuerpoVehiculo,
+          })
         : await api.patch(`/clientes/${inicial.id}`, { nombre, telefono, email, documento })
-      // Desde el formulario de carro se vuelve a él con el dueño ya elegido (flujo de recepción).
-      if (esNuevo && parametros.get('siguiente') === 'vehiculo') {
-        navegar(`/vehiculos/nuevo?cliente=${guardado.id}`, {
-          state: { aviso: `Cliente ${guardado.nombre} registrado. Ahora registre su carro.` },
-        })
+      if (!esNuevo) {
+        navegar(`/clientes/${guardado.id}`, { state: { aviso: 'Cambios guardados' } })
         return
       }
+      // Se confirma con la respuesta del servidor, no con lo que se envió: si el vehículo no
+      // vuelve asociado al cliente, se avisa en vez de mostrar un éxito falso.
+      const placa = cuerpoVehiculo && normalizarPlaca(cuerpoVehiculo.placa)
+      const asociado = !placa || guardado.vehiculos?.some((v) => v.placa === placa)
       navegar(`/clientes/${guardado.id}`, {
-        state: { aviso: esNuevo ? `Cliente ${guardado.nombre} registrado` : 'Cambios guardados' },
+        state: asociado
+          ? {
+              aviso: placa
+                ? `Cliente ${guardado.nombre} registrado con el vehículo ${placa}`
+                : `Cliente ${guardado.nombre} registrado`,
+            }
+          : {
+              avisoTipo: 'error',
+              aviso: `El cliente ${guardado.nombre} se guardó, pero el servidor no registró el vehículo ${placa}. Agréguelo con «Agregar vehículo» y avise al administrador del sistema.`,
+            },
       })
     } catch (err) {
-      setErrores(erroresPorCampo(err))
+      const separados = separarErrores(erroresPorCampo(err))
+      setErrores(separados.cliente)
+      setErroresVehiculo(separados.vehiculo)
       setErrorGeneral(err.message)
       setGuardando(false)
     }
@@ -148,6 +188,33 @@ function Formulario({ inicial }) {
         </div>
       </details>
 
+      {esNuevo && (
+        <section aria-labelledby="titulo-vehiculo" className="flex flex-col gap-4 border-t border-borde pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="titulo-vehiculo" className="flex items-center gap-2 text-base font-semibold">
+              <Icono nombre={vehiculo.tipo === 'MOTO' ? 'moto' : 'carro'} className="size-5 text-texto-suave" />
+              Información del vehículo
+            </h2>
+            <label className="inline-flex min-h-11 items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={sinVehiculo}
+                onChange={(e) => setSinVehiculo(e.target.checked)}
+                className="size-4"
+              />
+              Registrar sin vehículo por ahora
+            </label>
+          </div>
+          {conVehiculo ? (
+            <CamposVehiculo datos={vehiculo} alCambiar={setVehiculo} errores={erroresVehiculo} />
+          ) : (
+            <p className="text-sm text-texto-suave">
+              Podrá agregar sus vehículos después, desde la ficha del cliente.
+            </p>
+          )}
+        </section>
+      )}
+
       {esNuevo ? (
         <CasillaAutorizacion
           marcada={datos.autoriza_datos}
@@ -175,6 +242,8 @@ function Formulario({ inicial }) {
 
 export default function ClienteFormulario() {
   const { id } = useParams()
+  // Desde el formulario del vehículo llegan los datos que ya se habían escrito.
+  const { state } = useLocation()
   const { datos, error, recargar } = useConsulta(id ? `/clientes/${id}` : null)
 
   return (
@@ -182,7 +251,7 @@ export default function ClienteFormulario() {
       <h1 className="text-2xl font-semibold">
         {id ? `Editar cliente${datos ? `: ${datos.nombre}` : ''}` : 'Nuevo cliente'}
       </h1>
-      {!id && <Formulario inicial={{}} />}
+      {!id && <Formulario inicial={{}} vehiculoInicial={state?.vehiculo} />}
       {id && error && <ErrorCarga error={error} recurso="cliente" alReintentar={recargar} />}
       {id && !datos && !error && <Esqueleto etiqueta="Cargando cliente" />}
       {id && datos && <Formulario key={datos.id} inicial={datos} />}

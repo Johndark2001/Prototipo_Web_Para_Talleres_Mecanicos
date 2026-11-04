@@ -38,9 +38,13 @@ def listar_clientes(
     )
 
 
-@router.post("", response_model=ClienteSalida, status_code=status.HTTP_201_CREATED)
-def crear_cliente(datos: ClienteCrear, actual: AdminORecepcion, db: DB) -> ClienteSalida:
-    return ClienteSalida.model_validate(servicio.crear(db, actual, datos))
+@router.post("", response_model=ClienteDetalle, status_code=status.HTTP_201_CREATED)
+def crear_cliente(datos: ClienteCrear, actual: AdminORecepcion, db: DB) -> ClienteDetalle:
+    """Con `vehiculo`, registra también su primer vehículo en la misma operación (#6)."""
+    cliente = servicio.crear(db, actual, datos)
+    return ClienteDetalle.model_validate(
+        servicio.obtener(db, actual, cliente.id, con_vehiculos=True)
+    )
 
 
 @router.get("/{cliente_id}", response_model=ClienteDetalle)

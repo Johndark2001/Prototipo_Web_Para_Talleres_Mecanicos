@@ -89,15 +89,8 @@ export default function Vehiculos() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Vehículos</h1>
-        {puedeEditar && (
-          <EnlaceBoton to="/vehiculos/nuevo" state={tipo ? { tipo } : undefined}>
-            <Icono nombre="mas" />
-            Vehículo
-          </EnlaceBoton>
-        )}
-      </div>
+      {/* Cambio #6: sin botón «+ Vehículo»; se registran con el cliente o desde su ficha. */}
+      <h1 className="text-2xl font-semibold">Vehículos</h1>
 
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
         <FiltroTipoVehiculo
@@ -158,7 +151,7 @@ export default function Vehiculos() {
           <EstadoVacio
             icono={tipo ? TIPOS_VEHICULO[tipo].icono : 'carro'}
             titulo={`Aún no hay ${plural} ${tipo === 'MOTO' ? 'registradas' : 'registrados'}`}
-            texto="Cada vehículo se registra a nombre de un cliente. Empiece por el cliente o use «+ Vehículo»."
+            texto="Cada vehículo se registra con su dueño. Use «Nuevo cliente» o «Agregar vehículo» en la ficha del cliente."
           />
         ))}
 

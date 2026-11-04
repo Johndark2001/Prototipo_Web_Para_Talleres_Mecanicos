@@ -41,7 +41,9 @@ Anio = Annotated[Annotated[int, Field(ge=1950, le=2100)] | None, BeforeValidator
 Color = texto_opcional(30)
 
 
-class VehiculoCrear(BaseModel):
+class VehiculoDatos(BaseModel):
+    """Datos propios del vehículo, sin el dueño (también van dentro del alta del cliente)."""
+
     placa: Placa
     # Opcional para no romper a quien ya registra sin tipo: por defecto es un carro.
     tipo: TipoVehiculo = TipoVehiculo.CARRO
@@ -49,6 +51,9 @@ class VehiculoCrear(BaseModel):
     modelo: TextoVehiculo
     anio: Anio = None
     color: Color = None
+
+
+class VehiculoCrear(VehiculoDatos):
     cliente_id: int
 
 

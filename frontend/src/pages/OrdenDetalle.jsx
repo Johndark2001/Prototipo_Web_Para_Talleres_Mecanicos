@@ -9,6 +9,7 @@ import EtiquetaTipo from '../components/EtiquetaTipo.jsx'
 import Esqueleto from '../components/Esqueleto.jsx'
 import Icono from '../components/Icono.jsx'
 import Placa from '../components/Placa.jsx'
+import { claseBoton } from '../components/estilosBoton.js'
 import AccionesEstado from '../components/orden/AccionesEstado.jsx'
 import EnlaceSeguimiento from '../components/orden/EnlaceSeguimiento.jsx'
 import HistorialOrden from '../components/orden/HistorialOrden.jsx'
@@ -27,6 +28,16 @@ const textoDe = (orden) => ({
   diagnostico: orden.diagnostico ?? '',
   trabajo_realizado: orden.trabajo_realizado ?? '',
 })
+
+/** Bloque de la vista vertical de la orden (cambio #4): título y su contenido. */
+function Seccion({ titulo, children }) {
+  return (
+    <section aria-label={titulo} className="flex flex-col gap-2">
+      <h2 className="text-lg font-semibold">{titulo}</h2>
+      {children}
+    </section>
+  )
+}
 
 function VistaOrden({ ordenInicial }) {
   const { sesion } = useSesion()
@@ -75,8 +86,10 @@ function VistaOrden({ ordenInicial }) {
   }
 
   const { vehiculo, cliente } = orden
+  // Cambio #4B: el informe final solo existe para órdenes entregadas (el backend lo verifica).
+  const entregada = orden.estado === 'ENTREGADO'
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Link to="/ordenes" className="inline-flex items-center gap-1 self-start text-sm text-texto-suave hover:underline">
         <Icono nombre="atras" className="size-4" />
         Órdenes
@@ -116,41 +129,69 @@ function VistaOrden({ ordenInicial }) {
         </Aviso>
       )}
 
-      <div className="tarjeta p-4">
-        <LineaTiempo estado={orden.estado} historial={orden.historial} />
-      </div>
-
-      <AccionesEstado orden={orden} alCambiarEstado={cambiarEstado} />
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          <PanelMecanico orden={orden} alActualizar={aplicar} alError={(texto) => setAviso({ tipo: 'error', texto })} />
-          <PanelRecepcion orden={orden} alActualizar={aplicar} />
-          {compartePublico && <EnlaceSeguimiento codigo={orden.codigo_seguimiento} />}
+      <Seccion titulo="Estado de la orden">
+        <div className="tarjeta p-4">
+          <LineaTiempo estado={orden.estado} historial={orden.historial} />
         </div>
-        <div className="flex flex-col gap-4">
+      </Seccion>
+
+      {(orden.transiciones.length > 0 || entregada) && (
+        <Seccion titulo="Acciones">
+          <AccionesEstado orden={orden} alCambiarEstado={cambiarEstado} />
+          {entregada && (
+            <div className="flex flex-col gap-2 tarjeta p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-texto-suave">
+                La orden fue entregada. Descargue el informe final para el cliente.
+              </p>
+              <a href={`/api/v1/ordenes/${orden.id}/informe.pdf`} download className={claseBoton('primario')}>
+                <Icono nombre="descargar" className="size-4" />
+                Descargar informe PDF
+              </a>
+            </div>
+          )}
+        </Seccion>
+      )}
+
+      <Seccion titulo="Información general">
+        <PanelRecepcion orden={orden} alActualizar={aplicar} />
+        <PanelMecanico orden={orden} alActualizar={aplicar} alError={(texto) => setAviso({ tipo: 'error', texto })} />
+      </Seccion>
+
+      {['diagnostico', 'trabajo_realizado'].map((campo) => (
+        <Seccion key={campo} titulo={campo === 'diagnostico' ? 'Diagnóstico' : 'Trabajo realizado'}>
           <PanelTrabajo
+            campo={campo}
             orden={orden}
             borrador={borrador}
-            alCambiar={(campo, valor) => setBorrador({ ...borrador, [campo]: valor })}
+            alCambiar={(nombre, valor) => setBorrador({ ...borrador, [nombre]: valor })}
             sucio={sucio}
             guardando={guardando}
             alGuardar={guardarTrabajo}
           />
-          <PanelLiquidacion
-            orden={orden}
-            alActualizar={(actualizada, mensaje) => {
-              // Conserva lo escrito y no guardado en diagnóstico y trabajo realizado.
-              setOrden(actualizada)
-              setAviso({ tipo: 'exito', texto: mensaje })
-            }}
-            alError={(texto) => setAviso({ tipo: 'error', texto })}
-          />
-        </div>
-      </div>
+        </Seccion>
+      ))}
 
-      <h2 className="text-lg font-semibold">Historial</h2>
-      <HistorialOrden historial={orden.historial} asignaciones={orden.asignaciones} />
+      <Seccion titulo="Costos">
+        <PanelLiquidacion
+          orden={orden}
+          alActualizar={(actualizada, mensaje) => {
+            // Conserva lo escrito y no guardado en diagnóstico y trabajo realizado.
+            setOrden(actualizada)
+            setAviso({ tipo: 'exito', texto: mensaje })
+          }}
+          alError={(texto) => setAviso({ tipo: 'error', texto })}
+        />
+      </Seccion>
+
+      {compartePublico && (
+        <Seccion titulo="Enlace de seguimiento">
+          <EnlaceSeguimiento codigo={orden.codigo_seguimiento} />
+        </Seccion>
+      )}
+
+      <Seccion titulo="Historial">
+        <HistorialOrden historial={orden.historial} asignaciones={orden.asignaciones} />
+      </Seccion>
     </div>
   )
 }

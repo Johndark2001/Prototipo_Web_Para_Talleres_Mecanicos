@@ -127,7 +127,10 @@ Convenciones de esta sección:
 | codigo_seguimiento | varchar(32) | no | **UQ en todo el sistema**; al menos 128 bits aleatorios (ADR-005) |
 | estado | estado_orden | no | por defecto `RECIBIDO` |
 | kilometraje | integer | sí | CHECK ≥ 0 |
-| motivo_ingreso | text | no | |
+| motivo_ingreso | text | no | texto compuesto «categoría — observación» desde la migración 0007 (SPEC §21.10); se conserva para listas y consultas anteriores |
+| categoria_problema | varchar(80) | sí | nombre de la categoría del catálogo según el tipo de vehículo; nula en órdenes anteriores a la migración 0007 |
+| categoria_otro | varchar(120) | sí | detalle cuando la categoría es «Otro»; CHECK: nulo si la categoría no es «Otro» |
+| observacion_cliente | text | sí | lo que el cliente reporta; en las órdenes anteriores a 0007 se copió de `motivo_ingreso` |
 | diagnostico | text | sí | |
 | trabajo_realizado | text | sí | obligatorio para pasar a `REPARADO` (RN-17) |
 | motivo_cancelacion | text | sí | CHECK: no nulo si `estado = CANCELADA` (RN-18) |
@@ -396,6 +399,9 @@ erDiagram
         estado_orden estado
         integer kilometraje "nullable"
         text motivo_ingreso
+        varchar categoria_problema "nullable"
+        varchar categoria_otro "nullable"
+        text observacion_cliente "nullable"
         text diagnostico "nullable"
         text trabajo_realizado "nullable"
         text motivo_cancelacion "nullable"

@@ -26,7 +26,7 @@ function Dato({ etiqueta, children }) {
   )
 }
 
-function ListaVehiculos({ vehiculos }) {
+function ListaVehiculos({ vehiculos, enlaceAgregar }) {
   return (
     <ul className="divide-y divide-borde tarjeta">
       {vehiculos.map((vehiculo) => (
@@ -46,6 +46,17 @@ function ListaVehiculos({ vehiculos }) {
           </Link>
         </li>
       ))}
+      {enlaceAgregar && (
+        <li>
+          <Link
+            to={enlaceAgregar}
+            className="flex min-h-14 items-center gap-3 px-4 py-3 font-semibold text-primario transition-colors duration-150 hover:bg-primario-suave"
+          >
+            <Icono nombre="mas" className="size-5 shrink-0" />
+            Agregar vehículo
+          </Link>
+        </li>
+      )}
     </ul>
   )
 }
@@ -62,6 +73,9 @@ export default function ClienteDetalle() {
   // Un cliente anonimizado ya no se edita ni se reactiva (RN-11).
   const puedeEditar = ROLES_EDITAN_CLIENTES.includes(sesion.usuario.rol) && !cliente.anonimizado
   const puedeAnonimizar = sesion.usuario.rol === ROLES.ADMIN && !cliente.anonimizado
+  // Cambio #6: los vehículos adicionales se agregan desde la ficha del cliente.
+  const puedeAgregarVehiculo = puedeEditar && cliente.activo
+  const enlaceAgregar = `/vehiculos/nuevo?cliente=${cliente.id}`
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -139,24 +153,26 @@ export default function ClienteDetalle() {
         </Dato>
       </dl>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Vehículos</h2>
-        {puedeEditar && cliente.activo && (
-          <EnlaceBoton to={`/vehiculos/nuevo?cliente=${cliente.id}`}>
-            <Icono nombre="mas" />
-            Vehículo
-          </EnlaceBoton>
-        )}
-      </div>
+      <h2 className="text-lg font-semibold">Vehículos asociados</h2>
 
       {cliente.vehiculos.length === 0 ? (
         <EstadoVacio
           icono="carro"
           titulo="Este cliente no tiene vehículos registrados"
-          texto={puedeEditar && cliente.activo ? 'Registre su carro o su moto con el botón «+ Vehículo».' : undefined}
-        />
+          texto={puedeAgregarVehiculo ? 'Registre su carro o su moto.' : undefined}
+        >
+          {puedeAgregarVehiculo && (
+            <EnlaceBoton to={enlaceAgregar}>
+              <Icono nombre="mas" />
+              Agregar vehículo
+            </EnlaceBoton>
+          )}
+        </EstadoVacio>
       ) : (
-        <ListaVehiculos vehiculos={cliente.vehiculos} />
+        <ListaVehiculos
+          vehiculos={cliente.vehiculos}
+          enlaceAgregar={puedeAgregarVehiculo ? enlaceAgregar : null}
+        />
       )}
     </div>
   )

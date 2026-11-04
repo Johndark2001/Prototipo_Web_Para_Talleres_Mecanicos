@@ -108,7 +108,10 @@ Table orden_trabajo {
   codigo_seguimiento varchar(32) [not null, unique, note: '>= 128 bits aleatorios, seguro para URL (ADR-005)']
   estado estado_orden [not null, default: 'RECIBIDO']
   kilometraje integer [note: 'CHECK >= 0']
-  motivo_ingreso text [not null]
+  motivo_ingreso text [not null, note: 'Categoría — observación (migración 0007, SPEC §21.10)']
+  categoria_problema varchar(80) [note: 'Catálogo según el tipo de vehículo; nula en órdenes anteriores a 0007']
+  categoria_otro varchar(120) [note: "CHECK categoria_otro IS NULL OR categoria_problema = 'Otro'"]
+  observacion_cliente text [note: 'Lo que reporta el cliente; copiada de motivo_ingreso en órdenes anteriores']
   diagnostico text
   trabajo_realizado text [note: 'Obligatorio para pasar a REPARADO (RN-17)']
   motivo_cancelacion text [note: 'CHECK estado <> CANCELADA OR motivo_cancelacion IS NOT NULL (RN-18)']

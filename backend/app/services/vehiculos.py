@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.db import restriccion_violada
 from app.core.errores import DatosInvalidos, NoEncontrado
 from app.models import Cliente, TipoVehiculo, Usuario, Vehiculo
-from app.schemas.vehiculos import VehiculoActualizar, VehiculoCrear, normalizar_placa
+from app.schemas.vehiculos import (
+    VehiculoActualizar,
+    VehiculoCrear,
+    VehiculoDatos,
+    normalizar_placa,
+)
 from app.services import clientes as servicio_clientes
 
 RESTRICCION_PLACA = "uq_vehiculo_taller_placa"
@@ -75,7 +80,7 @@ def _dueno_valido(db: Session, actual: Usuario, cliente_id: int) -> Cliente:
 
 
 def _verificar_placa_libre(
-    db: Session, actual: Usuario, placa: str, excepto_id: int | None = None
+    db: Session, actual: Usuario, placa: str, excepto_id: int | None = None, campo: str = "placa"
 ) -> None:
     consulta = select(Vehiculo.activo).where(
         Vehiculo.taller_id == actual.taller_id, Vehiculo.placa == placa
@@ -84,22 +89,31 @@ def _verificar_placa_libre(
         consulta = consulta.where(Vehiculo.id != excepto_id)
     activo = db.scalar(consulta)
     if activo is not None:
-        raise DatosInvalidos("placa", _mensaje_placa_duplicada(placa, activo))
+        raise DatosInvalidos(campo, _mensaje_placa_duplicada(placa, activo))
+
+
+def error_placa_simultanea(exc: IntegrityError, placa: str, campo: str = "placa"):
+    """Dos registros simultáneos de la misma placa: el segundo choca con la restricción."""
+    if restriccion_violada(exc) == RESTRICCION_PLACA:
+        return DatosInvalidos(campo, _mensaje_placa_duplicada(placa))
+    return None
 
 
 def _guardar(db: Session, placa: str) -> None:
     try:
         db.commit()
-    except IntegrityError as exc:  # dos registros simultáneos de la misma placa
+    except IntegrityError as exc:
         db.rollback()
-        if restriccion_violada(exc) == RESTRICCION_PLACA:
-            raise DatosInvalidos("placa", _mensaje_placa_duplicada(placa)) from exc
+        if error := error_placa_simultanea(exc, placa):
+            raise error from exc
         raise
 
 
-def crear(db: Session, actual: Usuario, datos: VehiculoCrear) -> Vehiculo:
-    cliente = _dueno_valido(db, actual, datos.cliente_id)
-    _verificar_placa_libre(db, actual, datos.placa)
+def nuevo(
+    db: Session, actual: Usuario, cliente: Cliente, datos: VehiculoDatos, campo: str = "placa"
+) -> Vehiculo:
+    """Agrega el vehículo a la sesión sin confirmar; quien llama hace el commit."""
+    _verificar_placa_libre(db, actual, datos.placa, campo=campo)
     vehiculo = Vehiculo(
         taller_id=actual.taller_id,
         cliente=cliente,
@@ -111,6 +125,12 @@ def crear(db: Session, actual: Usuario, datos: VehiculoCrear) -> Vehiculo:
         color=datos.color,
     )
     db.add(vehiculo)
+    return vehiculo
+
+
+def crear(db: Session, actual: Usuario, datos: VehiculoCrear) -> Vehiculo:
+    cliente = _dueno_valido(db, actual, datos.cliente_id)
+    vehiculo = nuevo(db, actual, cliente, datos)
     _guardar(db, datos.placa)
     return vehiculo
 

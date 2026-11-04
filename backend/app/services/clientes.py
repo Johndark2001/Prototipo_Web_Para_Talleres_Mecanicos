@@ -12,6 +12,8 @@ from app.schemas.clientes import ClienteActualizar, ClienteCrear
 
 RESTRICCION_DOCUMENTO = "uq_cliente_taller_documento"
 MENSAJE_DOCUMENTO_DUPLICADO = "Ya existe un cliente con ese documento en el taller"
+# Campo del error cuando la placa llega dentro del alta del cliente (cambio #6).
+CAMPO_PLACA = "vehiculo.placa"
 MENSAJE_ANONIMIZADO = "Los datos de este cliente fueron anonimizados y ya no se pueden modificar"
 
 
@@ -92,17 +94,27 @@ def _verificar_documento_libre(
         raise DatosInvalidos("documento", MENSAJE_DOCUMENTO_DUPLICADO)
 
 
-def _guardar(db: Session) -> None:
+def _guardar(db: Session, placa: str | None = None) -> None:
     try:
         db.commit()
-    except IntegrityError as exc:  # dos registros simultáneos con el mismo documento
+    except IntegrityError as exc:  # dos registros simultáneos con el mismo documento o placa
         db.rollback()
         if restriccion_violada(exc) == RESTRICCION_DOCUMENTO:
             raise DatosInvalidos("documento", MENSAJE_DOCUMENTO_DUPLICADO) from exc
+        if placa and (error := _vehiculos().error_placa_simultanea(exc, placa, CAMPO_PLACA)):
+            raise error from exc
         raise
 
 
+def _vehiculos():
+    # Import diferido: el servicio de vehículos ya importa este módulo.
+    from app.services import vehiculos
+
+    return vehiculos
+
+
 def crear(db: Session, actual: Usuario, datos: ClienteCrear) -> Cliente:
+    """Alta del cliente y, si viene, de su primer vehículo en una sola transacción (#6)."""
     _verificar_documento_libre(db, actual, datos.documento)
     cliente = Cliente(
         taller_id=actual.taller_id,
@@ -114,7 +126,11 @@ def crear(db: Session, actual: Usuario, datos: ClienteCrear) -> Cliente:
         fecha_autorizacion=datetime.now(UTC),
     )
     db.add(cliente)
-    _guardar(db)
+    placa = None
+    if datos.vehiculo is not None:
+        placa = datos.vehiculo.placa
+        _vehiculos().nuevo(db, actual, cliente, datos.vehiculo, campo=CAMPO_PLACA)
+    _guardar(db, placa)
     return cliente
 
 

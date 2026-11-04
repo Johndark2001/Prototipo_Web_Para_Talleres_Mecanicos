@@ -767,6 +767,22 @@ Cambio pedido por el autor antes de la Semana 5. No toca la lógica de negocio, 
 | V-4 | Rediseño visual con los componentes de §11: nuevo logo, inicio de sesión ilustrado, navegación lateral oscura, botones con estados de foco, presión y carga, tarjetas y sombras unificadas. Las animaciones duran 150-320 ms y se apagan con «reducir movimiento». Sin dependencias nuevas (ADR-004): íconos, logo e ilustraciones son SVG propios. Referencia: [docs/guia-skills-diseno.md](docs/guia-skills-diseno.md). |
 | V-5 | Se quitan los subtítulos que repetían el título en Clientes, Órdenes, Vehículos, Inventario e Inicio. Se conserva el de Usuarios porque explica una regla (cada persona entra con su propio correo). |
 
+### 21.10 Vista de la orden, informe PDF, categoría del problema y alta de cliente con vehículo (04/11/2026, pendiente de aprobación del autor)
+
+Cambios #4, #4B, #5 y #6 pedidos por el autor antes de la Semana 5. No cambian los roles, los estados ni las transiciones; los datos existentes se conservan (migración 0007).
+
+| ID | Decisión |
+|---|---|
+| O-1 | (#4) La vista de la orden pasa a una sola columna en este orden: encabezado, estado, acciones (incluido el informe PDF), información general (datos de recepción y mecánico), diagnóstico, trabajo realizado, costos, enlace de seguimiento e historial. Diagnóstico y trabajo realizado quedan en secciones separadas; «Guardar» en cualquiera guarda ambos, como antes. |
+| O-2 | (#4B) `GET /ordenes/{id}/informe.pdf` genera el informe final solo si la orden está `ENTREGADO`; en cualquier otro estado (incluida `CANCELADA`) responde 409. Lo descarga cualquier usuario que pueda ver la orden (el mecánico, solo las suyas). Contiene taller, número, fechas, cliente, vehículo, categoría, observación, diagnóstico, trabajo, mano de obra, repuestos, total, historial de estados (sin notas internas ni nombres de usuarios) y un mensaje de agradecimiento. |
+| O-3 | (#4B) `GET /seguimiento/{codigo}/informe.pdf` da el mismo informe en el portal público, con el mismo límite por IP. Para respetar ADR-005 omite el nombre y el teléfono del cliente y el kilometraje, y enmascara la placa (ABC***). **Excepción a revisar:** sí incluye categoría, observación, diagnóstico y trabajo realizado, que el seguimiento JSON no muestra; solo existe cuando la orden ya fue entregada. |
+| O-4 | (#4B) El PDF se genera en el backend con **fpdf2** (dependencia nueva, Python puro), para que la regla «solo ENTREGADO» la valide el servidor y quede cubierta por pytest. Usa la fuente Helvetica del PDF (Latin-1): los caracteres fuera de ella (emoji, comillas tipográficas) se reemplazan. Fechas en hora de Colombia (UTC−5). |
+| O-5 | (#5) La orden registra `categoria_problema` (catálogo fijo por tipo de vehículo: 22 categorías para carro y 20 para moto, servido en `GET /catalogos/categorias-problema`), `categoria_otro` (obligatorio si la categoría es «Otro») y `observacion_cliente`. Se guarda el nombre, no un código, para que la orden y el PDF no cambien si el catálogo cambia. Solo ADMIN y RECEPCION los registran o corrigen; el mecánico recibe 403. |
+| O-6 | (#5) Compatibilidad: `motivo_ingreso` sigue siendo obligatorio en la base y se compone como «categoría — observación». El API sigue aceptando solo `motivo_ingreso` (forma anterior); se exige la categoría o el motivo. La migración 0007 copia el motivo de las órdenes anteriores a `observacion_cliente` y las deja sin categoría («Sin categoría» en pantalla y en el PDF); al corregirlas se les puede asignar una. |
+| O-7 | (#5) El buscador de categorías ignora tildes y mayúsculas («bateria» → «Problemas de batería», «fren» → «Problemas de frenos»); Enter elige la primera coincidencia. La lista cambia sola con el tipo del vehículo elegido. |
+| O-8 | (#6) `POST /clientes` acepta un objeto `vehiculo` opcional y crea cliente y vehículo en una sola transacción: si la placa ya existe o un dato del vehículo es inválido, no se guarda ninguno (errores con campo `vehiculo.<campo>`). La respuesta pasa a ser el detalle del cliente con sus vehículos (amplía la anterior; no quita campos). |
+| O-9 | (#6) «Nuevo cliente» incluye «Información del vehículo» (tipo, placa, marca, modelo, año, color), con la opción «Registrar sin vehículo por ahora». La lista de Vehículos ya no tiene el botón principal «+ Vehículo»; se agregan más vehículos desde la ficha del cliente («Vehículos asociados → Agregar vehículo»). `POST /vehiculos` y la pantalla `/vehiculos/nuevo` se conservan para ese uso. |
+
 ---
 
 ## Anexo A — Bocetos de pantallas

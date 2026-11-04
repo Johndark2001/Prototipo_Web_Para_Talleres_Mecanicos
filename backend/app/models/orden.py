@@ -69,6 +69,10 @@ class OrdenTrabajo(Base):
             "estado <> 'ENTREGADO' OR fecha_entrega IS NOT NULL",
             name="fecha_entrega_obligatoria",
         ),
+        CheckConstraint(
+            "categoria_otro IS NULL OR categoria_problema = 'Otro'",
+            name="categoria_otro_solo_con_otro",
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -94,7 +98,14 @@ class OrdenTrabajo(Base):
         server_default=EstadoOrden.RECIBIDO.value,
     )
     kilometraje: Mapped[int | None] = mapped_column(Integer)
+    # Texto compuesto (categoría — observación); se conserva para las pantallas y consultas
+    # anteriores al catálogo de la migración 0007.
     motivo_ingreso: Mapped[str] = mapped_column(Text)
+    # Cambio #5: categoría del catálogo según el tipo de vehículo (nula en órdenes anteriores),
+    # el detalle cuando es "Otro" y lo que el cliente dijo en la recepción.
+    categoria_problema: Mapped[str | None] = mapped_column(String(80))
+    categoria_otro: Mapped[str | None] = mapped_column(String(120))
+    observacion_cliente: Mapped[str | None] = mapped_column(Text)
     diagnostico: Mapped[str | None] = mapped_column(Text)
     trabajo_realizado: Mapped[str | None] = mapped_column(Text)
     motivo_cancelacion: Mapped[str | None] = mapped_column(Text)

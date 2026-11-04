@@ -8,7 +8,7 @@ import { useRetrasado } from '../hooks/useRetrasado.js'
 import Boton from './Boton.jsx'
 
 /** Elige el dueño de un carro buscando entre los clientes activos del taller. */
-export default function SelectorCliente({ valor, alCambiar, error, ayuda, enlaceNuevo }) {
+export default function SelectorCliente({ valor, alCambiar, error, ayuda, enlaceNuevo, estadoNuevo }) {
   const id = useId()
   const [texto, setTexto] = useState('')
   const busqueda = useRetrasado(texto.trim())
@@ -86,8 +86,8 @@ export default function SelectorCliente({ valor, alCambiar, error, ayuda, enlace
         {error && <p className="text-sm text-peligro">{error}</p>}
       </div>
       {!valor && enlaceNuevo && (
-        <Link to={enlaceNuevo} className="self-start py-2 text-sm font-semibold text-primario underline">
-          ¿Cliente nuevo? Regístrelo primero
+        <Link to={enlaceNuevo} state={estadoNuevo} className="self-start py-2 text-sm font-semibold text-primario underline">
+          ¿Cliente nuevo? Regístrelo junto con este vehículo
         </Link>
       )}
     </fieldset>

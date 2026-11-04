@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, Response, status
 
 from app.api.deps import DB, AdminORecepcion, UsuarioActual
 from app.models import EstadoOrden, OrdenTrabajo, Usuario
@@ -15,7 +15,7 @@ from app.schemas.ordenes import (
     OrdenDetalle,
     OrdenResumen,
 )
-from app.services import lineas_orden, liquidacion
+from app.services import informe_pdf, lineas_orden, liquidacion
 from app.services import ordenes as servicio
 
 router = APIRouter(prefix="/ordenes", tags=["ordenes"])
@@ -61,6 +61,28 @@ def crear_orden(datos: OrdenCrear, actual: AdminORecepcion, db: DB) -> OrdenDeta
 @router.get("/{orden_id}", response_model=OrdenDetalle)
 def obtener_orden(orden_id: int, actual: UsuarioActual, db: DB) -> OrdenDetalle:
     return _detalle(actual, servicio.obtener(db, actual, orden_id))
+
+
+@router.get(
+    "/{orden_id}/informe.pdf",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def descargar_informe(orden_id: int, actual: UsuarioActual, db: DB) -> Response:
+    """Informe final para el cliente; solo si la orden fue ENTREGADA (409 en otro caso)."""
+    orden = servicio.obtener(db, actual, orden_id)
+    return respuesta_pdf(informe_pdf.generar(orden), informe_pdf.nombre_archivo(orden))
+
+
+def respuesta_pdf(contenido: bytes, archivo: str) -> Response:
+    return Response(
+        content=contenido,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{archivo}"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @router.patch("/{orden_id}", response_model=OrdenDetalle)

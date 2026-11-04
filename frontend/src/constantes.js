@@ -35,6 +35,9 @@ export const TIPOS_VEHICULO = {
   MOTO: { etiqueta: 'Moto', plural: 'motos', icono: 'moto' },
 }
 
+// Formulario vacío de vehículo (alta del cliente con su primer vehículo, cambio #6).
+export const VEHICULO_VACIO = { placa: '', tipo: 'CARRO', marca: '', modelo: '', anio: '', color: '' }
+
 // Movimientos de inventario: el signo de la cantidad dice si entró o salió del estante.
 export const TIPOS_MOVIMIENTO = {
   ENTRADA: 'Entrada',

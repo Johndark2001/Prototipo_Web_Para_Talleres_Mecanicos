@@ -13,7 +13,7 @@ from pydantic import (
 
 from app.schemas.comunes import Nombre, error_campo, rechazar_nulo, vacio_a_nulo
 from app.schemas.ordenes import UsuarioResumen
-from app.schemas.vehiculos import VehiculoResumen
+from app.schemas.vehiculos import VehiculoDatos, VehiculoResumen
 
 # La API exige la palabra escrita, no solo un "sí": anonimizar no se puede deshacer.
 PALABRA_CONFIRMACION = "ANONIMIZAR"
@@ -71,6 +71,9 @@ class ClienteCrear(BaseModel):
     documento: Documento = None
     # RN-10: se exige en cada alta; la fecha la pone el servidor, no el navegador.
     autoriza_datos: Annotated[bool, AfterValidator(_exigir_autorizacion)]
+    # Cambio #6: el primer vehículo se registra en la misma operación. Si algo falla
+    # (p. ej. la placa ya existe), no queda guardado ni el cliente ni el vehículo.
+    vehiculo: VehiculoDatos | None = None
 
 
 class ClienteActualizar(BaseModel):

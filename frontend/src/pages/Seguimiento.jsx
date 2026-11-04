@@ -8,6 +8,7 @@ import Icono from '../components/Icono.jsx'
 import { MarcaLogo } from '../components/Logo.jsx'
 import Placa from '../components/Placa.jsx'
 import LineaTiempo from '../components/orden/LineaTiempo.jsx'
+import { claseBoton } from '../components/estilosBoton.js'
 import { formatearCantidad, formatearFechaHora, formatearPesos } from '../formato.js'
 import { useConsulta } from '../hooks/useConsulta.js'
 
@@ -81,6 +82,17 @@ export default function Seguimiento() {
             {ultima && <span className="text-sm text-texto-suave">Actualizado {formatearFechaHora(ultima.fecha)}</span>}
           </div>
           <p className="text-base">{MENSAJES[orden.estado]}</p>
+          {orden.estado === 'ENTREGADO' && (
+            // Cambio #4B: el informe final solo existe cuando la orden fue entregada.
+            <a
+              href={`/api/v1/seguimiento/${codigo}/informe.pdf`}
+              download
+              className={claseBoton('primario', 'self-start')}
+            >
+              <Icono nombre="descargar" className="size-4" />
+              Descargar informe PDF
+            </a>
+          )}
         </div>
 
         <div className="tarjeta p-4">

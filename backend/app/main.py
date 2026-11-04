@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import (
     auth,
+    catalogos,
     clientes,
     dashboard,
     mecanicos,
@@ -75,6 +76,7 @@ def crear_app() -> FastAPI:
     api.include_router(repuestos.router)
     api.include_router(dashboard.router)
     api.include_router(seguimiento.router)
+    api.include_router(catalogos.router)
     app.include_router(api)
 
     montar_frontend(app, DIRECTORIO_FRONTEND)
