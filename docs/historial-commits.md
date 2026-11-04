@@ -10,6 +10,7 @@ Registro de los hitos del desarrollo de Taller Digital. Sirve para identificar l
 | ee5c2f4 | Semana 4 | Implementa la Semana 4 del MVP: inventario, liquidación y seguimiento |
 | 84f20f3 | Anonimización | Implementa la anonimización del cliente (RN-11 y RNF-06) |
 | e4a164a | Documentación | Agrega la documentación de sustentación y cierra la versión previa a la Semana 5 |
+| e51d187 | Cambios #4–#6 | Reorganiza la orden, agrega el informe PDF, la categoría del problema y el alta de cliente con vehículo |
 
 ## Detalle de cada hito
 
@@ -21,6 +22,7 @@ Registro de los hitos del desarrollo de Taller Digital. Sirve para identificar l
 | `ee5c2f427b591243bef3d091a932f93dad3d7e02` | 26/10/2026 | 0004 | 194 | S4-1 a S4-9 (§21.6) |
 | `84f20f34cfc8a8fc49956a507d66e4f5a5206b29` | 28/10/2026 | 0005 | 214 | A-1 a A-7 (§21.7) |
 | `e4a164ae0b84d164205242901290210f578e3506` | 28/10/2026 | 0005 (sin cambios) | 214 | Cierre previo a la Semana 5 (§21.8) |
+| `e51d1874a43da5d25cab760562cbe25e0a949665` | 04/11/2026 | 0007 | 263 | O-1 a O-9 (§21.10) |
 
 «—»: el mensaje de ese commit no registra el total de pruebas.
 
@@ -28,11 +30,11 @@ Registro de los hitos del desarrollo de Taller Digital. Sirve para identificar l
 
 Hash:
 
-e4a164a (`e4a164ae0b84d164205242901290210f578e3506`)
+e51d187 (`e51d1874a43da5d25cab760562cbe25e0a949665`)
 
 Descripción:
 
-MVP funcional completo y documentado antes del inicio de la Semana 5. Validado en entorno local con datos ficticios; todavía no está desplegado.
+MVP con la vista vertical de la orden, el informe PDF final, la categoría del problema y el alta de cliente con vehículo (SPEC §21.10, aprobadas el 04/11/2026). Validado por el autor en entorno local con datos ficticios; todavía no está desplegado.
 
 # Funcionalidades implementadas
 
@@ -48,6 +50,9 @@ MVP funcional completo y documentado antes del inicio de la Semana 5. Validado e
 - Seguimiento público.
 - Dashboard (versión mínima: órdenes por estado, entregados hoy y alertas de stock).
 - Anonimización.
+- Categoría del problema y observación del cliente (catálogo por tipo de vehículo).
+- Informe PDF final de la orden entregada (interno y desde el seguimiento público).
+- Alta de cliente con su primer vehículo en una sola operación.
 - Documentación de sustentación ([docs/sustentacion/](sustentacion/README.md)).
 
 # Pendientes para la Semana 5
