@@ -220,7 +220,7 @@ def crear(db: Session, actual: Usuario, datos: OrdenCrear) -> OrdenTrabajo:
         raise DatosInvalidos("vehiculo_id", "El carro está inactivo. Actívelo antes de recibirlo.")
     if not vehiculo.cliente.activo:
         raise DatosInvalidos(
-            "vehiculo_id", "El dueño del carro está inactivo. Actívelo antes de abrir la orden."
+            "vehiculo_id", "El cliente del carro está inactivo. Actívelo antes de abrir la orden."
         )
     abierta = _orden_abierta_del_vehiculo(db, vehiculo)
     if abierta is not None:

@@ -33,7 +33,7 @@ function FilaVehiculo({ vehiculo }) {
             <span className="truncate font-medium">{describirVehiculo(vehiculo)}</span>
             <EtiquetaTipo tipo={vehiculo.tipo} />
           </p>
-          <p className="truncate text-sm text-texto-suave">Dueño: {vehiculo.cliente.nombre}</p>
+          <p className="truncate text-sm text-texto-suave">Cliente: {vehiculo.cliente.nombre}</p>
         </div>
         {!vehiculo.activo && <EtiquetaActivo activo={false} />}
         <Icono nombre="derecha" className="size-5 shrink-0 text-texto-suave" />
@@ -151,7 +151,7 @@ export default function Vehiculos() {
           <EstadoVacio
             icono={tipo ? TIPOS_VEHICULO[tipo].icono : 'carro'}
             titulo={`Aún no hay ${plural} ${tipo === 'MOTO' ? 'registradas' : 'registrados'}`}
-            texto="Cada vehículo se registra con su dueño. Use «Nuevo cliente» o «Agregar vehículo» en la ficha del cliente."
+            texto="Cada vehículo se registra a nombre de un cliente. Use «Nuevo cliente» o «Agregar vehículo» en la ficha del cliente."
           />
         ))}
 

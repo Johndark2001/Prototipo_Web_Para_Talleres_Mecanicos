@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Para quién | Dueño, administrador o gerente del taller (rol `ADMIN`) |
-| Versión del sistema | Commit `84f20f3` (28/10/2026) |
+| Versión del sistema | Commit `e51d187` (04/11/2026) más los ajustes visuales del 05/11/2026 (SPEC §21.11) |
 | Complementa | [Manual de usuario](01-manual-usuario.md), con el paso a paso de cada pantalla |
 
 El administrador hace todo lo que hace Recepción y, además, gestiona los usuarios, el catálogo y el stock del inventario, puede devolver una orden al estado anterior y es el único que puede anonimizar a un cliente.
@@ -36,6 +36,7 @@ Esta matriz es la del SPEC §3. Se verifica **en el servidor en cada solicitud**
 | Crear y editar clientes y vehículos | Sí | Sí | Solo ver |
 | Anonimizar un cliente | Sí | — | — |
 | Abrir una orden y asignar o reasignar mecánico | Sí | Sí | — |
+| Registrar o corregir la categoría del problema, la observación del cliente, el kilometraje y la entrega estimada | Sí | Sí | — (solo consulta) |
 | Ver órdenes | Todas | Todas | Solo las asignadas a él |
 | Registrar diagnóstico, trabajo, mano de obra y repuestos | Sí | Sí | Solo en sus órdenes |
 | Iniciar diagnóstico, esperando repuestos, marcar reparado | Sí | — | Sí, en sus órdenes |
@@ -46,10 +47,11 @@ Esta matriz es la del SPEC §3. Se verifica **en el servidor en cada solicitud**
 | Detalle y movimientos de un repuesto | Sí | — | — |
 | Resumen del taller (Inicio) | Sí | Sí | Vista «Mis órdenes abiertas» |
 | Copiar el enlace de seguimiento | Sí | Sí | — |
+| Descargar el informe PDF de una orden entregada | Sí | Sí | Sí, de sus órdenes |
 
 **Reglas que cruzan los roles:**
 - Al **reasignar** una orden, el mecánico anterior deja de verla (S3-5).
-- El mecánico **solo** cambia el diagnóstico y el trabajo realizado de la recepción; no puede corregir el motivo de ingreso, el kilometraje ni la fecha estimada.
+- El mecánico **solo** cambia el diagnóstico y el trabajo realizado; no puede corregir la categoría del problema, la observación del cliente, el kilometraje ni la fecha estimada. Si lo intenta por fuera de la pantalla, el servidor responde «Su rol no tiene permiso» (O-5).
 - Todas las acciones se limitan al **taller del usuario**. Ningún rol ve datos de otro taller.
 
 ---
@@ -205,7 +207,7 @@ La Ley 1581 de 2012 da al titular el derecho a pedir que se supriman sus datos. 
 | Documento | «1144000111» | vacío (el documento queda libre para un registro nuevo) |
 | Estado | Activo | **Inactivo**, sin posibilidad de reactivarlo ni editarlo |
 | Autorización y su fecha | Se conservan | Se conservan, como prueba de que el dato se trató con permiso (A-3) |
-| Carros (placa, marca, modelo) | — | Se conservan, ligados al mismo cliente (A-5) |
+| Vehículos (tipo, placa, marca, modelo) | — | Se conservan, ligados al mismo cliente (A-5) |
 | Órdenes, historial, liquidaciones | — | Se conservan; se ven con el nombre anonimizado |
 | Enlace de seguimiento | — | Sigue funcionando; nunca mostró datos personales |
 | Auditoría | — | Se registra **quién** (el administrador) y **cuándo** |
@@ -231,7 +233,7 @@ Además de estas reglas de la aplicación, una restricción de la base de datos 
 
 ### 7.5 Lo que la anonimización no cubre (limitaciones conocidas)
 
-- **Textos libres de las órdenes** (motivo de ingreso, diagnóstico, trabajo realizado, notas de estado y de asignación) **no se modifican** (A-6). Si alguien escribió allí datos personales, quedan.
+- **Textos libres de las órdenes** (observación del cliente, descripción de «Otro», motivo de ingreso compuesto, diagnóstico, trabajo realizado, notas de estado y de asignación) **no se modifican** (A-6). Si alguien escribió allí datos personales, quedan, y la observación, el diagnóstico y el trabajo realizado también salen en el **informe PDF público** de las órdenes entregadas (O-3).
 - **La placa** no se anonimiza, porque es un dato del vehículo (A-5).
 - **Copias de seguridad:** en el despliegue (pendiente) habrá que definir cuánto tiempo se conservan las copias de seguridad que tengan datos anteriores a la anonimización.
 
@@ -248,12 +250,14 @@ Además de estas reglas de la aplicación, una restricción de la base de datos 
 **Datos personales (Ley 1581)**
 - Leer la autorización al cliente antes de marcar la casilla.
 - Pedir solo teléfono y nombre; correo y documento solo si el cliente quiere darlos.
-- No escribir datos personales en los campos de texto libre de las órdenes, ni en la mano de obra, que el cliente ve en su enlace (S4-6).
-- Enviar el enlace de seguimiento solo al dueño del carro.
+- No escribir datos personales en los campos de texto libre de las órdenes, ni en la mano de obra, que el cliente ve en su enlace (S4-6). La observación, el diagnóstico y el trabajo realizado también aparecen en el informe PDF que se descarga desde el enlace (O-3).
+- Enviar el enlace de seguimiento solo al cliente que trajo el vehículo.
 - Usar **Desactivar** para lo cotidiano y **Anonimizar** solo ante una solicitud del titular.
 
 **Operación**
-- Abrir la orden apenas llega el carro: así los tiempos de cada etapa son reales.
+- Abrir la orden apenas llega el vehículo: así los tiempos de cada etapa son reales.
+- Elegir siempre la categoría más cercana y usar **Otro** solo cuando ninguna aplica: así se podrán contar los problemas más frecuentes.
+- Registrar al cliente **con su vehículo** en un solo paso (**Nuevo cliente → Información del vehículo**) y marcar bien el tipo (**Carro** o **Moto**).
 - Pedir a los mecánicos que cambien el estado en el momento en que ocurre, no al final del día.
 - Escribir notas claras al cancelar, al devolver y al esperar repuestos.
 - Registrar las entradas de mercancía el mismo día y hacer conteos físicos periódicos.
@@ -282,6 +286,10 @@ Además de estas reglas de la aplicación, una restricción de la base de datos 
 | S2-4 / S3-3 | Asociar carros nuevos o abrir órdenes con clientes o carros inactivos |
 | S3-4 | Una entrega estimada anterior a hoy |
 | A-1 / A-4 | Anonimizar con órdenes abiertas, dos veces, o deshacerlo |
+| O-2 / O-3 | Generar el informe PDF de una orden que no está entregada (incluida una cancelada) |
+| O-5 | Abrir una orden sin categoría (o sin motivo); elegir «Otro» sin describirlo; que el mecánico cambie la categoría o la observación |
+| O-8 | Guardar un cliente nuevo a medias: si el vehículo falla (placa repetida o dato inválido), no se guarda ninguno de los dos |
+| V-1 | Un vehículo sin tipo: siempre es **Carro** o **Moto** |
 
 ### 9.2 Limitaciones de esta versión
 
@@ -298,4 +306,7 @@ Además de estas reglas de la aplicación, una restricción de la base de datos 
 | No hay factura electrónica, IVA ni pagos en línea | Fuera de alcance |
 | No funciona sin conexión; no hay app nativa | Fuera de alcance |
 | No hay fotos ni archivos adjuntos | Fuera de alcance |
+| El catálogo de categorías del problema (22 para carro, 20 para moto) es fijo: no hay pantalla para editarlo | Cambiarlo requiere modificar el código (`app/services/categorias.py`). Las órdenes guardan el nombre, así que un cambio de catálogo no altera las órdenes existentes (O-5) |
+| El informe PDF usa la fuente básica del formato PDF: emoji y comillas tipográficas se reemplazan por caracteres simples | Decisión O-4 |
+| Las órdenes anteriores al catálogo aparecen «Sin categoría» | Se corrigen con **Corregir datos de recepción** mientras estén abiertas; las cerradas quedan así (O-6) |
 | El plan gratuito previsto puede tardar varios segundos en la primera solicitud tras un rato inactivo | Riesgo R-07, aplica al desplegar |

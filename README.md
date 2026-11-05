@@ -1,6 +1,6 @@
 # Taller Digital
 
-Prototipo web (MVP) para gestionar los procesos operativos de talleres mecánicos de la zona norte de Cali: clientes, vehículos, órdenes de trabajo, inventario, liquidación y seguimiento para el cliente.
+Prototipo web (MVP) para gestionar los procesos operativos de talleres mecánicos de la zona norte de Cali: clientes, vehículos (carros y motos), órdenes de trabajo con la categoría del problema, inventario, liquidación, informe final en PDF y seguimiento para el cliente.
 
 Proyecto de grado de Ingeniería de Software, Corporación Universitaria Iberoamericana.
 
@@ -14,7 +14,7 @@ Proyecto de grado de Ingeniería de Software, Corporación Universitaria Iberoam
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Python 3.13 · FastAPI · SQLAlchemy 2 · Alembic |
+| Backend | Python 3.13 · FastAPI · SQLAlchemy 2 · Alembic · fpdf2 (informe PDF) |
 | Base de datos | PostgreSQL 17 |
 | Frontend | React · Vite · Tailwind CSS · React Router |
 
@@ -93,8 +93,9 @@ Los crea `semilla_demo`. La clave de todos es `demo12345`.
 | Taller Demo Chipichape | admin@chipichape.demo.co | Administrador |
 | Taller Demo Chipichape | mecanico@chipichape.demo.co | Mecánico |
 
-También crea clientes, carros y órdenes ficticias en distintos estados (recibida sin
-mecánico, en diagnóstico, esperando repuestos y entregada). Los dos talleres tienen un carro con la placa
+También crea clientes, carros, una moto (JKL45D) y órdenes ficticias en distintos estados (recibida sin
+mecánico, en diagnóstico, esperando repuestos y entregada). Las órdenes de la semilla usan el motivo libre
+anterior al catálogo, así que se ven «Sin categoría». Los dos talleres tienen un carro con la placa
 `ABC123` a propósito: buscarla desde cada taller sirve para comprobar el aislamiento.
 
 Cada taller recibe además un inventario de repuestos, con uno por debajo del mínimo y uno
@@ -108,13 +109,21 @@ Semana 4, completa con mano de obra y repuestos las órdenes de demostración qu
 
 Cada orden tiene un enlace público, visible en su detalle para recepción y el administrador:
 `http://localhost:5173/seguimiento/<código>`. Se abre sin iniciar sesión y muestra el estado
-del carro y lo que se cobra, sin datos personales.
+del carro y lo que se cobra, sin datos personales. Cuando la orden está entregada, el taller y el
+cliente pueden descargar el informe final en PDF (el del cliente, sin nombre, teléfono ni kilometraje).
+
+### Después de actualizar el código
+
+Tras un `git pull` o un cambio de dependencias, ejecute `uv sync` y `uv run alembic upgrade head` en
+`backend/`, y `npm install` en `frontend/`. **Reinicie siempre el backend** antes de probar: un
+`uvicorn` anterior que siga corriendo no conoce los cambios nuevos.
 
 ## Comandos
 
 | Comando (en `backend/`) | Qué hace |
 |---|---|
-| `uv run pytest` | Pruebas automatizadas (usan `TEST_DATABASE_URL`, que se vacía en cada ejecución) |
+| `uv run pytest` | Pruebas automatizadas: 263 (usan `TEST_DATABASE_URL`, que se vacía en cada ejecución) |
+| `uv run --with pytest-cov pytest --cov=app` | Pruebas con medición de cobertura, sin agregar `pytest-cov` al proyecto |
 | `uv run ruff check . && uv run ruff format .` | Revisión de estilo y formato |
 | `uv run alembic upgrade head` | Aplica las migraciones |
 

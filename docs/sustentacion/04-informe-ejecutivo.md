@@ -5,7 +5,7 @@
 | Título | Prototipo web para la gestión de los procesos operativos en talleres mecánicos de la zona norte de Cali |
 | Autor | John Edison Hernández Vargas — Ingeniería de Software, Corporación Universitaria Iberoamericana |
 | Para quién | Jurados y docentes |
-| Corte del informe | 28/10/2026 — commit `84f20f3` |
+| Corte del informe | 05/11/2026 — commit `e51d187` más los ajustes visuales del 05/11/2026 (SPEC §21.11) |
 
 ---
 
@@ -28,15 +28,17 @@ El diagnóstico de la investigación (entrevistas semiestructuradas y observaci�
 
 ## 2. Solución desarrollada
 
-**Taller Digital** es una aplicación web, pensada primero para el celular, que digitaliza el ciclo completo de un carro en el taller:
+**Taller Digital** es una aplicación web, pensada primero para el celular, que digitaliza el ciclo completo de un carro o una moto en el taller:
 
 ```
-Cliente → Carro → Orden de trabajo → Mecánico → Estados → Repuestos e inventario → Liquidación → Seguimiento del cliente
+Cliente + vehículo → Orden de trabajo (categoría del problema) → Mecánico → Estados → Repuestos e inventario → Liquidación → Entrega e informe PDF → Seguimiento del cliente
 ```
 
 Rasgos principales:
 - **Trazabilidad total:** cada cambio de estado, asignación, repuesto y movimiento de inventario queda con fecha, hora y usuario. Esos datos permitirán medir los tiempos de cada etapa, que son la evidencia que pide la pregunta de investigación.
-- **Transparencia para el cliente:** un enlace único por orden, sin cuenta, muestra el estado, la línea de tiempo y el cobro, **sin datos personales**.
+- **Recepción estructurada:** cada orden registra una **categoría del problema** de un catálogo por tipo de vehículo (22 para carros, 20 para motos) y la **observación del cliente** con sus palabras. Así se podrán contar los problemas más frecuentes.
+- **Transparencia para el cliente:** un enlace único por orden, sin cuenta, muestra el estado, la línea de tiempo y el cobro, **sin datos personales**. Al entregar, el cliente descarga un **informe final en PDF**.
+- **Carros y motos:** cada vehículo tiene su tipo, la lista se filtra por él y el cliente se registra con su vehículo en un solo paso.
 - **Inventario confiable:** el stock se descuenta al usar un repuesto en una orden y **nunca queda negativo**, ni siquiera con operaciones simultáneas.
 - **Protección de datos (Ley 1581):** autorización obligatoria con fecha y **anonimización** del cliente que conserva la historia del taller.
 - **Varios talleres en una sola instalación**, con sus datos aislados.
@@ -46,9 +48,9 @@ Arquitectura: monolito por capas con **FastAPI (Python)**, **React** y **Postgre
 
 ## 3. Objetivos
 
-| Objetivo | Estado al 28/10/2026 | Evidencia |
+| Objetivo | Estado al 05/11/2026 | Evidencia |
 |---|---|---|
-| **General:** desarrollar un prototipo web para la gestión de los procesos operativos en talleres mecánicos de la zona norte de Cali | **Logrado en su versión MVP funcional**, validado en entorno local | Código en el repositorio, 214 pruebas automatizadas y validación funcional del autor |
+| **General:** desarrollar un prototipo web para la gestión de los procesos operativos en talleres mecánicos de la zona norte de Cali | **Logrado en su versión MVP funcional**, validado en entorno local | Código en el repositorio, 263 pruebas automatizadas (91 % de cobertura del backend) y validación funcional del autor |
 | **OE1:** diagnosticar los procesos operativos actuales | Logrado en la fase de investigación (documentos de la tesis) | `investigacion_completa.md`, `entrevistas_e_instrumentos.md` |
 | **OE2:** diseñar la estructura y los módulos | **Logrado** | SPEC.md (26 requisitos funcionales, 11 no funcionales, 21 reglas de negocio), 6 ADR y el modelo de datos de 12 tablas |
 | **OE3:** implementar y evaluar con una prueba piloto | **Implementación: lograda (MVP). Evaluación piloto: pendiente** | El piloto con datos reales está planificado después del despliegue (SPEC §17.2) |
@@ -62,19 +64,21 @@ Arquitectura: monolito por capas con **FastAPI (Python)**, **React** y **Postgre
 
 | Beneficio | Cómo lo logra el sistema |
 |---|---|
-| Recepción más ágil | Buscar la placa, escribir el motivo y abrir la orden; desde el carro, el vehículo ya viene elegido |
+| Recepción más ágil | Buscar la placa, elegir la categoría del problema y abrir la orden; desde el vehículo, ya viene elegido. Un cliente nuevo se registra con su vehículo en un solo formulario |
 | Saber quién tiene cada carro | Mecánico asignado, carga de trabajo visible y vista «Mis órdenes» |
 | Control del inventario | Descuento automático, alertas de stock bajo, entradas y ajustes con motivo |
 | Cobro sin errores de suma | Liquidación calculada por el servidor con precios congelados en la orden |
 | Historia del carro | Historial de mantenimiento por placa |
 | Responsabilidad clara | Todo queda registrado con el usuario que lo hizo |
-| Datos para decidir | Tiempos de cada etapa guardados desde el primer cambio de estado (reportes pendientes) |
+| Datos para decidir | Tiempos de cada etapa guardados desde el primer cambio de estado y la categoría de cada problema (reportes pendientes) |
+| Constancia del servicio | Informe PDF final con diagnóstico, trabajo, repuestos y total |
 
 ### 4.2 Para el cliente
 
 - Ve el estado de su carro desde el celular, sin llamar y sin crear una cuenta.
 - Ve el desglose de mano de obra y repuestos antes de recoger el carro.
-- Sus datos personales no aparecen en el enlace, y puede pedir que se anonimicen.
+- Al recogerlo, descarga desde el mismo enlace el informe PDF de lo que se le hizo.
+- Sus datos personales no aparecen en el enlace ni en el PDF público, y puede pedir que se anonimicen.
 
 ### 4.3 Para la investigación
 
@@ -87,7 +91,10 @@ Arquitectura: monolito por capas con **FastAPI (Python)**, **React** y **Postgre
 |---|---|
 | MVP funcional (flujo completo) | **Terminado y validado en local** por el autor |
 | Anonimización (Ley 1581) | **Terminada y aprobada** (28/10/2026) |
-| Pruebas automatizadas | **214 pruebas, todas pasan**, contra PostgreSQL real |
+| Rediseño visual y tipo de vehículo (carro o moto) | **Terminados y aprobados** (04/11/2026) |
+| Informe PDF, categoría del problema, vista vertical de la orden y alta de cliente con vehículo | **Terminados y aprobados** (04/11/2026) |
+| Terminología «Cliente» y fondos temáticos por módulo | **Implementados** (05/11/2026), pendientes de commit |
+| Pruebas automatizadas | **263 pruebas, todas pasan**, contra PostgreSQL real; 91 % de cobertura del backend |
 | Revisión de estilo | Ruff (Python) y ESLint (JavaScript) sin hallazgos |
 | Despliegue público con HTTPS | **Pendiente** (Semana 5) |
 | Reportes RF-15 | **Pendientes** (Semana 5) |
@@ -103,16 +110,20 @@ Arquitectura: monolito por capas con **FastAPI (Python)**, **React** y **Postgre
 | 25/10/2026 | Semana 3: órdenes, estados y asignación | `fb3f819` |
 | 26/10/2026 | Semana 4: inventario, liquidación y seguimiento; MVP validado | `ee5c2f4` |
 | 28/10/2026 | Anonimización del cliente | `84f20f3` |
+| 28/10/2026 | Documentación de sustentación e historial de commits | `e4a164a`, `e4692f8` |
+| 04/11/2026 | Rediseño visual y tipo de vehículo (carro o moto) | `e3fc487` |
+| 04/11/2026 | Vista vertical de la orden, informe PDF, categoría del problema y alta de cliente con vehículo | `e51d187` |
+| 05/11/2026 | Terminología «Cliente» y fondos temáticos por módulo | Sin commit |
 
-El plan preveía el MVP entre el 26/10 y el 22/11/2026. Se completó antes de esa fecha, lo que deja margen para el despliegue, los reportes y el piloto antes de la sustentación de diciembre.
+El plan preveía el MVP entre el 26/10 y el 22/11/2026. Se completó antes de esa fecha, lo que dejó margen para mejoras pedidas por el autor antes de la Semana 5 y deja margen para el despliegue, los reportes y el piloto antes de la sustentación de diciembre.
 
 ## 6. Alcance implementado
 
-**Implementado:** RF-01 a RF-13, RF-16 y RF-17 completos; RF-14 en versión mínima. Además, la anonimización del cliente (RN-11, RNF-06).
+**Implementado:** RF-01 a RF-13, RF-16 y RF-17 completos; RF-14 en versión mínima. Además, la anonimización del cliente (RN-11, RNF-06), el tipo de vehículo, la categoría del problema y el alta de cliente con vehículo. RF-23 (liquidación imprimible) queda **parcialmente** cubierto por el informe PDF final, que solo existe para órdenes entregadas.
 
 **Pendiente:** RF-15 (reportes), RF-14 completo, el despliegue con HTTPS, el endurecimiento de seguridad, RNF-09 completo y RF-21 (manual: este paquete es su base).
 
-**Aplazado (Should/Could):** RF-18 a RF-20 y RF-22 a RF-26.
+**Aplazado (Should/Could):** RF-18 a RF-20, RF-22 y RF-24 a RF-26.
 
 **Fuera de alcance:** facturación DIAN e IVA, pagos en línea, cuentas de cliente, notificaciones automáticas, funcionamiento sin conexión, app nativa, adjuntos, contabilidad y varias sedes.
 
@@ -123,9 +134,10 @@ El detalle requisito por requisito está en la [Matriz final de requisitos](07-m
 | Módulo | Qué hace | Requisitos |
 |---|---|---|
 | Acceso y usuarios | Inicio y cierre de sesión, 3 roles, alta, cambio de rol y desactivación | RF-01, RF-02, RF-16 |
-| Clientes | Registro con autorización Ley 1581, búsqueda, edición, desactivación y anonimización | RF-03, RN-10, RN-11 |
-| Vehículos | Registro con placa normalizada y única, cambio de dueño, búsqueda global por placa | RF-04, RN-20 |
-| Órdenes de trabajo | Recepción, consecutivo por taller, 6 estados con historial, notas obligatorias | RF-05, RF-06 |
+| Clientes | Registro con autorización Ley 1581 y, en el mismo paso, su primer vehículo; búsqueda, edición, desactivación y anonimización | RF-03, RN-10, RN-11, O-8 |
+| Vehículos | Carros y motos; registro con placa normalizada y única, cambio de cliente, filtro Todos/Carros/Motos combinado con la placa, búsqueda global por placa | RF-04, RN-20, V-1 a V-3 |
+| Órdenes de trabajo | Recepción con categoría del problema y observación del cliente, consecutivo por taller, 6 estados con historial, notas obligatorias, vista en una columna | RF-05, RF-06, O-1, O-5 |
+| Informe final | PDF de la orden entregada, para el taller y, sin datos personales, para el cliente | RF-23 (parcial), O-2 a O-4 |
 | Asignación | Asignar y reasignar mecánico con historial; «Mis órdenes» | RF-07 |
 | Historial del vehículo | Todas las órdenes de un carro | RF-11 |
 | Inventario | Catálogo, entradas, ajustes por conteo, movimientos y alertas | RF-08, RF-10 |
@@ -134,6 +146,7 @@ El detalle requisito por requisito está en la [Matriz final de requisitos](07-m
 | Seguimiento público | Enlace sin cuenta, placa enmascarada, sin datos personales, con límite de consultas | RF-13 |
 | Inicio (dashboard mínimo) | Órdenes por estado, entregados hoy y alertas de stock | RF-14 (parcial) |
 | Varios talleres | Aislamiento por taller probado en cada recurso | RNF-05 |
+| Interfaz | Rediseño con logo, ilustraciones y fondos temáticos por módulo; terminología «Cliente» | RF-17, V-4, T-1 a T-3 |
 
 ## 8. Trabajo pendiente
 

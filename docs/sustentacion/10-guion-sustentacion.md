@@ -4,7 +4,7 @@
 |---|---|
 | Para quién | El autor, para leer o presentar ante el jurado |
 | Duración total | 15 minutos (9 de exposición + 5 de demostración + 1 de cierre) |
-| Base | Commit `84f20f3` (28/10/2026) |
+| Base | Commit `e51d187` (04/11/2026) más los ajustes visuales del 05/11/2026 (SPEC §21.11) |
 | Material de apoyo | 10 diapositivas sugeridas; demostración en vivo ([guion detallado](05-guion-demostracion.md)) |
 
 **Cómo usar este guion:** el texto entre comillas está escrito para leerse en voz alta, a un ritmo de unas 140 palabras por minuto. Las indicaciones entre corchetes son para usted, no para leer. Si el tiempo se acorta a 10 minutos, use la versión reducida de la sección 10.
@@ -28,7 +28,7 @@
 
 > «Buenos días, honorables jurados. Mi nombre es John Edison Hernández Vargas y presento mi proyecto de grado de Ingeniería de Software: *Prototipo web para la gestión de los procesos operativos en talleres mecánicos de la zona norte de Cali*.
 >
-> El resultado es Taller Digital: una aplicación web, pensada primero para el celular, que acompaña a un carro desde que entra al taller hasta que se entrega, y que permite al cliente seguir su carro desde un enlace.
+> El resultado es Taller Digital: una aplicación web, pensada primero para el celular, que acompaña a un carro o una moto desde que entra al taller hasta que se entrega con su informe final, y que permite al cliente seguir su vehículo desde un enlace.
 >
 > En los próximos minutos voy a presentar el problema, los objetivos, la arquitectura, cómo lo desarrollé, una demostración en vivo, los resultados y, con la misma claridad, lo que todavía falta.»
 
@@ -87,15 +87,17 @@
 
 ## 5. Desarrollo — 5:30 a 7:30
 
-**[Diapositiva 6: línea de tiempo — Fase 0 y Semana 1 (23/10), Semana 2 (25/10), Semana 3 (25/10), Semana 4 (26/10), Anonimización (28/10).]**
+**[Diapositiva 6: línea de tiempo — Fase 0 y Semana 1 (23/10), Semana 2 (25/10), Semana 3 (25/10), Semana 4 (26/10), Anonimización (28/10), Mejoras tras el MVP (04/11 y 05/11).]**
 
 > «El desarrollo siguió un método guiado por especificación. Antes de escribir código redacté y aprobé un documento de especificación con 26 requisitos funcionales priorizados con MoSCoW, 11 no funcionales y 21 reglas de negocio, cada uno trazado a su fuente en la investigación.
 >
 > Después construí por cortes verticales semanales: en cada semana, la base de datos, la API y la interfaz de una función completa, con una demostración al final.
 >
-> La semana uno fueron las fundaciones: acceso, roles y usuarios. La semana dos, clientes y vehículos. La semana tres, el núcleo: órdenes, seis estados con historial y asignación de mecánicos. La semana cuatro completó el flujo: inventario, liquidación y el seguimiento del cliente. Y después agregué la anonimización de clientes para cumplir la Ley 1581.
+> La semana uno fueron las fundaciones: acceso, roles y usuarios. La semana dos, clientes y vehículos. La semana tres, el núcleo: órdenes, seis estados con historial y asignación de mecánicos. La semana cuatro completó el flujo: inventario, liquidación y el seguimiento del cliente. Después agregué la anonimización de clientes para cumplir la Ley 1581.
 >
-> Cada decisión que surgió en el camino quedó registrada con su identificador: son 41 decisiones documentadas.»
+> Con el margen que dejó el plan, revisé el MVP y agregué mejoras: carros y motos, una categoría del problema por tipo de vehículo, el informe final en PDF, el registro del cliente con su vehículo en un solo paso y un rediseño de la interfaz. Las nuevas columnas llegaron con migraciones que conservaron todos los datos anteriores.
+>
+> Cada decisión que surgió en el camino quedó registrada con su identificador: son 58 decisiones documentadas.»
 
 **[Diapositiva 7: los seis estados de la orden y, debajo, «cada cambio = fecha + hora + usuario + nota».]**
 
@@ -111,11 +113,11 @@
 
 | Tiempo | Qué hacer | Qué decir (resumido) |
 |---|---|---|
-| 7:30 | Recepción ya dentro. **Clientes → + Cliente** «Marta Ríos (demo)»; intente guardar sin autorización, luego márquela. **+ Carro** «dem-432» → DEM432. | «Sin autorización no se registra: está en la base de datos. La placa se normaliza.» |
-| 8:30 | **Nueva orden para este carro**: motivo, kilometraje, Mecánico Norte → **Abrir orden**. **Copiar enlace** y ábralo en el celular. | «Tres pasos para recibir un carro. Este enlace es lo que recibe la clienta.» |
+| 7:30 | Recepción ya dentro. **Clientes → + Cliente** «Marta Ríos (demo)» y, en el mismo formulario, el carro «dem-432» → DEM432. Intente guardar sin autorización, luego márquela. | «Cliente y carro se guardan juntos o ninguno. Sin autorización no se registra: está en la base de datos. La placa se normaliza.» |
+| 8:30 | **Nueva orden para este carro**: categoría escribiendo «fren» → **Problemas de frenos**, observación, kilometraje, Mecánico Norte → **Abrir orden**. **Copiar enlace** y ábralo en el celular. | «Tres pasos para recibir un carro. La categoría sale de un catálogo para carros y otro para motos. Este enlace es lo que recibe la clienta.» |
 | 9:15 | Ventana del mecánico (vista de celular): **Iniciar diagnóstico** → **Esperando repuestos** con nota. Actualice el celular del cliente. | «El mecánico ve solo sus órdenes. Cada cambio queda con su nombre y hora; la clienta ya lo ve.» |
 | 10:00 | Mecánico: **+ Repuesto** filtro W712 cantidad 5 → error «quedan 2»; cantidad 1. **+ Mano de obra** 60.000. Trabajo realizado → **Marcar reparado**. | «El stock nunca queda negativo, ni con operaciones simultáneas. El precio queda congelado en la orden.» |
-| 10:45 | Recepción: muestre el total calculado → **Entregar**. Actualice el celular: «Su carro ya fue entregado», placa DEM***. | «El total lo calcula el servidor, sin IVA. La clienta no ve ningún dato personal.» |
+| 10:45 | Recepción: muestre el total calculado → **Entregar** → **Descargar informe PDF**. Actualice el celular: «Su carro ya fue entregado», placa DEM*** y su propio botón de informe. | «El total lo calcula el servidor, sin IVA. El informe solo existe al entregar, y lo valida el servidor. La clienta no ve ningún dato personal, tampoco en su PDF.» |
 | 11:30 | Administrador: **Clientes → Marta Ríos → Anonimizar**, escriba ANONIMIZAR. Muestre el aviso de auditoría, la orden conservada y el enlace que sigue funcionando. | «Se borran sus datos personales y se conserva la historia del taller. Solo el administrador, con confirmación escrita, y queda registrado quién y cuándo.» |
 
 **[Vuelva a las diapositivas a las 12:30.]**
@@ -124,13 +126,13 @@
 
 ## 7. Resultados — 12:30 a 13:45
 
-**[Diapositiva 8: cifras — 15 de 17 requisitos *Must* completos, 21 de 21 reglas de negocio, 214 pruebas automatizadas, 3 pruebas de concurrencia, 12 tablas, 35 operaciones de API, $0.]**
+**[Diapositiva 8: cifras — 15 de 17 requisitos *Must* completos, 21 de 21 reglas de negocio, 263 pruebas automatizadas, 91 % de cobertura del backend, 3 pruebas de concurrencia, 12 tablas y 7 migraciones, 38 operaciones de API, $0.]**
 
 > «Estos son los resultados del desarrollo.
 >
 > De los 17 requisitos obligatorios, 15 están completos, el dashboard está en una versión mínima y los reportes están pendientes. Las 21 reglas de negocio están implementadas.
 >
-> El sistema tiene 214 pruebas automatizadas que pasan contra PostgreSQL real, incluidas pruebas de concurrencia para el número de orden y para el stock, y pruebas de aislamiento entre talleres en cada recurso. Además, cada semana cerró con una validación funcional; la del flujo completo pasó 32 de 32 verificaciones.
+> El sistema tiene 263 pruebas automatizadas que pasan contra PostgreSQL real y cubren el 91 % del backend, incluidas pruebas de concurrencia para el número de orden y para el stock, y pruebas de aislamiento entre talleres en cada recurso. Además, cada semana cerró con una validación funcional; la del flujo completo pasó 32 de 32 verificaciones.
 >
 > En el camino resolví problemas reales de ingeniería, como la concurrencia en el consecutivo y en el inventario, o la protección contra la enumeración de correos en el inicio de sesión.»
 
@@ -188,7 +190,7 @@ Use poco texto por diapositiva: el detalle está en lo que usted dice. Ponga los
 | Objetivos | 1:40 – 2:20 | General, y una frase sobre el estado de OE3 |
 | Arquitectura | 2:20 – 3:40 | Solo la diapositiva 5 |
 | Desarrollo | 3:40 – 4:40 | Solo la diapositiva 7 |
-| Demostración | 4:40 – 8:10 | Orden ya abierta: estados → repuesto con error de stock → entrega → enlace → anonimización |
+| Demostración | 4:40 – 8:10 | Orden ya abierta: estados → repuesto con error de stock → entrega → informe PDF → enlace → anonimización |
 | Resultados | 8:10 – 9:10 | Diapositiva 8 y una frase sobre lo pendiente |
 | Conclusiones | 9:10 – 10:00 | Las tres conclusiones |
 

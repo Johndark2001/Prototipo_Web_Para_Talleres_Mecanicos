@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Para quién | Jurados, docentes y el autor |
-| Corte | 28/10/2026 — commit `84f20f3` |
+| Corte | 05/11/2026 — commit `e51d187` más los ajustes visuales del 05/11/2026 (SPEC §21.11) |
 | Base | SPEC §17.2 (después del MVP), §18 (riesgos), §19.2 (criterios para la sustentación), decisión S4-8 |
 
 Este documento separa lo **pendiente** (ya planificado, antes de la sustentación) del **trabajo futuro** (después del proyecto o condicionado al piloto). **Nada de lo descrito aquí está implementado.**
@@ -36,7 +36,7 @@ flowchart LR
 
 **Qué se hará:**
 1. Crear un servicio web en Render conectado al repositorio.
-2. **Compilación:** instalar las dependencias del backend con `uv`, compilar la interfaz con `npm run build` y aplicar las migraciones (`alembic upgrade head`).
+2. **Compilación:** instalar las dependencias del backend con `uv` (incluida fpdf2, que es Python puro y no necesita paquetes del sistema), compilar la interfaz con `npm run build` y aplicar las migraciones (`alembic upgrade head`).
 3. **Inicio:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. El backend sirve la interfaz compilada desde el mismo dominio (ADR-001), así que no hace falta un segundo servicio ni configurar CORS.
 4. **Variables de entorno** en el panel de Render: `DATABASE_URL` (la de Neon), `SECRET_KEY` (nueva, generada solo para producción), `ENTORNO=produccion`.
 5. Crear el primer taller real con `crear_taller` y cargar los datos ficticios de demostración en un taller aparte.
@@ -59,7 +59,7 @@ flowchart LR
 **Qué se hará:**
 1. Crear un proyecto PostgreSQL 17 en Neon.
 2. Usar la cadena de conexión con SSL obligatorio, con el formato `postgresql+psycopg://…?sslmode=require`.
-3. Aplicar las migraciones 0001 a 0005.
+3. Aplicar las migraciones 0001 a 0007.
 4. **Respaldos:** definir y **probar** una restauración. El criterio de la fase de despliegue (F8) exige un respaldo de la base probado. Se recomienda un respaldo semanal con `pg_dump` (R-07).
 5. Definir cuánto tiempo se conservan las copias de seguridad, por la Ley 1581: una copia anterior a una anonimización todavía contiene los datos personales.
 
@@ -88,11 +88,12 @@ flowchart LR
 | R1 | Órdenes por estado, período y mecánico | `orden_trabajo`, `asignacion_orden` | Segunda |
 | R3 | Repuestos más consumidos | `orden_repuesto`, `movimiento_inventario` | Tercera |
 | R4 | Repuestos con stock bajo | `repuesto` | Cuarta (ya existe como alerta) |
+| Propuesta | Problemas más frecuentes por tipo de vehículo | `orden_trabajo.categoria_problema` (desde la migración 0007) | Sin prioridad asignada: no está en RF-15; requiere aprobación del autor |
 
 Además:
 - Pantalla **Reportes** con filtros de período y mecánico (boceto en el SPEC, Anexo A).
 - **Dashboard completo** (RF-14), más allá de los conteos actuales.
-- *Could*: exportar a CSV (RF-22) y liquidación imprimible (RF-23).
+- *Could*: exportar a CSV (RF-22). La liquidación imprimible (RF-23) ya está **parcialmente** cubierta por el informe PDF de las órdenes entregadas; faltaría imprimir la de una orden abierta, si se aprueba.
 - Criterio de éxito: **R2 calcula los tiempos por etapa con datos reales del piloto** (§19.2).
 
 ---
@@ -108,7 +109,7 @@ Además:
 | Auditoría de dependencias (`pip-audit` / `npm audit`) | Detectar librerías con vulnerabilidades conocidas | No realizada |
 | Cambio de clave por el usuario y restablecimiento por el administrador | Hoy no hay forma de cambiar una clave desde la interfaz | No existe |
 | IP real detrás del proxy para el límite del seguimiento | Que el límite sea por cliente y no por proxy | Pendiente con el despliegue |
-| Auditoría de accesibilidad con Lighthouse o axe | Cumplir RNF-07 con evidencia | Revisión manual hecha; herramienta pendiente |
+| Auditoría de accesibilidad con Lighthouse o axe | Cumplir RNF-07 con evidencia | Revisión manual hecha; herramienta pendiente. Incluir el contraste del texto sobre los fondos al 50 % (T-3) |
 | Revisión de código completa | Fase F7 | Pendiente |
 | Registro de inicios de sesión fallidos | Detectar intentos de acceso | Trabajo futuro |
 
@@ -147,6 +148,8 @@ Lo que **ya existe** y no se recorta: argon2id, cookie httpOnly con `SameSite=La
 | Talleres que quieren gestionarse solos | Pantalla de superadministración y de datos del taller (hoy se crean por script) |
 | Notificaciones | Botón de WhatsApp sin API (RF-20) y, más adelante, una integración con costo |
 | Más funciones del negocio | Catálogo de servicios (RF-18), historial en el enlace del cliente (RF-19), citas (RF-26), recordatorios (RF-25) |
+| Catálogo de categorías editable por taller | Hoy es fijo en el código (O-5); habría que llevarlo a una tabla por taller, conservando el nombre guardado en cada orden |
+| Informe PDF con tipografía completa | Incrustar una fuente Unicode en fpdf2 para no reemplazar emoji ni comillas tipográficas (O-4) |
 
 **Lo que no cambia al escalar:** la API, el modelo de datos y el aislamiento por taller ya están pensados para varios talleres en una sola instalación (ADR-006).
 
@@ -154,10 +157,10 @@ Lo que **ya existe** y no se recorta: argon2id, cookie httpOnly con `SameSite=La
 
 ## 9. Criterios de éxito para la sustentación (SPEC §19.2)
 
-| Criterio | Estado al 28/10/2026 |
+| Criterio | Estado al 05/11/2026 |
 |---|---|
 | 1. Todos los *Must* (RF-01 a RF-17) funcionan en la URL pública con HTTPS | 15 implementados, RF-14 parcial, RF-15 pendiente; sin URL pública |
-| 2. `pytest` pasa y cubre RN-01 a RN-21, las transiciones y el aislamiento | 214 pruebas pasan; falta documentar la cobertura regla por regla (RNF-09) |
+| 2. `pytest` pasa y cubre RN-01 a RN-21, las transiciones y el aislamiento | 263 pruebas pasan; cobertura del backend 91 %; falta formalizar la trazabilidad regla por regla (RNF-09) |
 | 3. Una orden recorre el ciclo completo desde un celular de 360 px y el cliente la ve en su enlace | Cumplido en local |
 | 4. R2 calcula los tiempos por etapa con datos reales del piloto | Pendiente |
 | 5. La revisión de seguridad no deja hallazgos críticos | Pendiente |

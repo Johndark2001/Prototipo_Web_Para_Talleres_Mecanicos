@@ -5,10 +5,11 @@
 | Proyecto | Prototipo web de gestión operativa para talleres mecánicos (zona norte de Cali) |
 | Autor y único desarrollador | John Edison Hernández Vargas |
 | Programa | Ingeniería de Software — Corporación Universitaria Iberoamericana |
-| Estado del código que se documenta | Commit `84f20f34cfc8a8fc49956a507d66e4f5a5206b29` (28/10/2026) |
-| Fuente oficial | [SPEC.md](../../SPEC.md), [ADR-001 a ADR-006](../decisions/), [modelo de datos](../modelo-datos.md) |
+| Estado del código que se documenta | Commit `e51d1874a43da5d25cab760562cbe25e0a949665` (04/11/2026) más los ajustes del 05/11/2026 sin commit: terminología «Cliente» y fondos temáticos (SPEC §21.11) |
+| Fuente oficial | [SPEC.md](../../SPEC.md), [ADR-001 a ADR-006](../decisions/), [modelo de datos](../modelo-datos.md), [historial de commits](../historial-commits.md) |
+| Última revisión de esta carpeta | 05/11/2026 (la versión anterior describía el commit `84f20f3` del 28/10/2026) |
 
-Estos documentos describen **solo lo que existe en el código hasta el commit `84f20f3`**. Lo que no está construido aparece marcado como *Pendiente* o *Trabajo futuro*.
+Estos documentos describen **solo lo que existe en el código en ese estado**. Lo que no está construido aparece marcado como *Pendiente* o *Trabajo futuro*.
 
 ## Cómo se clasifica cada elemento
 

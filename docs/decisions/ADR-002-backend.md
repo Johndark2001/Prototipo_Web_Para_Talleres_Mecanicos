@@ -29,6 +29,8 @@ Usar **Python 3.13 con FastAPI** y estas herramientas:
 | argon2id | Hash de contraseñas (la biblioteca concreta se fija en la Fase 1) |
 | Uvicorn | Servidor ASGI que ejecuta la aplicación |
 
+**Ampliación (04/11/2026, decisión O-4 del SPEC §21.10, aprobada por el autor):** se agrega **fpdf2** (≥ 2.8) para generar el informe final en PDF. Se eligió porque es Python puro, sin binarios del sistema (a diferencia de WeasyPrint o wkhtmltopdf), lo que facilita el despliegue en un plan gratuito, y porque generar el PDF en el servidor permite que la regla «solo órdenes entregadas» quede validada y probada con pytest. Limitación: usa la fuente base Helvetica (Latin-1), así que los caracteres fuera de ella se reemplazan.
+
 ## Alternativas consideradas
 
 ### Flask

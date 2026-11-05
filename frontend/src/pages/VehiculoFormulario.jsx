@@ -38,7 +38,7 @@ function Formulario({ inicial, duenoInicial }) {
     setErrores({})
     setErrorGeneral(null)
     if (!dueno) {
-      setErrores({ cliente_id: `Elija el dueño de${esMoto ? ' la moto' : 'l carro'}` })
+      setErrores({ cliente_id: `Elija el cliente de${esMoto ? ' la moto' : 'l carro'}` })
       return
     }
     setGuardando(true)
@@ -75,7 +75,7 @@ function Formulario({ inicial, duenoInicial }) {
         ayuda={
           esNuevo
             ? undefined
-            : 'Cambie el dueño solo si el vehículo se vendió. Las órdenes anteriores conservan a su dueño de entonces.'
+            : 'Cambie el cliente solo si el vehículo pasó a otra persona. Las órdenes anteriores conservan el cliente que tenían.'
         }
       />
       {cambioDeDueno && (

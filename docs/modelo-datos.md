@@ -2,9 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.0 (cierre de la Fase 0) |
-| Fecha | 23/10/2026 |
-| Estado | Aprobado (23/10/2026) |
+| Versión | 1.1 (migraciones 0005 a 0007) — la 1.0 cerró la Fase 0 |
+| Fecha | 05/11/2026 (1.0 del 23/10/2026) |
+| Estado | Aprobado (23/10/2026). Cambios aprobados después: 0005 (SPEC §21.7), 0006 (§21.9) y 0007 (§21.10) |
+| Migración vigente | `0007_categoria_problema` |
 | Motor | PostgreSQL 17 (ver [ADR-003](decisions/ADR-003-base-de-datos.md)) |
 | Versión DBML | [modelo-datos.dbml](modelo-datos.dbml) (se puede importar en dbdiagram.io) |
 
@@ -290,6 +291,8 @@ CHECK compuesto:
 | Enlace de seguimiento único | UQ `codigo_seguimiento` |
 | Autorización de datos obligatoria (RN-10) | `CHECK cliente.autoriza_datos = true` |
 | Anonimización coherente y auditada (RN-11, A-7) | `CHECK` `ck_cliente_anonimizacion_coherente`: sin anonimizar no hay auditoría; anonimizado exige `anonimizado_en` y `anonimizado_por`, sin correo ni documento, e inactivo |
+| El detalle de «Otro» solo acompaña a la categoría «Otro» (O-5) | `CHECK` `ck_orden_trabajo_categoria_otro_solo_con_otro`: `categoria_otro IS NULL OR categoria_problema = 'Otro'` |
+| Todo vehículo es carro o moto (V-1) | `vehiculo.tipo` de tipo `tipo_vehiculo`, `NOT NULL`, por defecto `CARRO` |
 | Motivo obligatorio al cancelar (RN-18) | `CHECK (estado <> 'CANCELADA' OR motivo_cancelacion IS NOT NULL)` |
 | Fecha de entrega obligatoria al entregar | `CHECK (estado <> 'ENTREGADO' OR fecha_entrega IS NOT NULL)` |
 | Cantidades y precios válidos | CHECK `> 0` en cantidades y `>= 0` en precios |
@@ -304,7 +307,10 @@ CHECK compuesto:
 - `trabajo_realizado` es obligatorio para pasar a `REPARADO` (RN-17);
 - la nota es obligatoria al retroceder de estado y en los ajustes de inventario;
 - cálculo de la liquidación (RN-06);
-- anonimización del cliente (RN-11): solo ADMIN, confirmación escrita, sin órdenes abiertas e irreversible (SPEC §21.7).
+- anonimización del cliente (RN-11): solo ADMIN, confirmación escrita, sin órdenes abiertas e irreversible (SPEC §21.7);
+- la categoría del problema debe pertenecer al catálogo del tipo de vehículo; «Otro» exige `categoria_otro`; se exige categoría o `motivo_ingreso`; `motivo_ingreso` se compone como «categoría — observación»; solo ADMIN y RECEPCION la registran o corrigen (SPEC §21.10, O-5 y O-6);
+- el alta de un cliente con su vehículo es una sola transacción: si el vehículo falla, no se guarda el cliente (O-8);
+- el informe PDF solo se genera para órdenes `ENTREGADO` (O-2).
 
 ## 6. Diagrama ER (Mermaid)
 
@@ -488,3 +494,5 @@ erDiagram
 | Tiempo por etapa (reporte R2) | Diferencia entre registros consecutivos de `historial_estado_orden` de cada orden |
 | Alertas de stock | `repuesto` con `stock_actual <= stock_minimo` y `activo = true` |
 | Órdenes por mecánico (reporte R1) | `orden_trabajo` agrupado por `mecanico_id` |
+| Informe PDF final (O-2, O-3) | Datos de la orden `ENTREGADO` con su taller, vehículo, cliente, líneas, liquidación e historial de estados; se genera al pedirlo y no se guarda |
+| Problemas más frecuentes (propuesta, sin reporte aprobado) | `orden_trabajo` agrupado por `categoria_problema` y por `vehiculo.tipo`; las órdenes anteriores a 0007 tienen la categoría nula |

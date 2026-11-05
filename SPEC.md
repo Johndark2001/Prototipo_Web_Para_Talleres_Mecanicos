@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.1 — Fase 0 cerrada |
-| Fecha | 23/10/2026 |
-| Estado | **APROBADO** por el autor el 23/10/2026. La Fase 0 queda cerrada. |
+| Versión | 1.2 — MVP con mejoras previas a la Semana 5 |
+| Fecha | 05/11/2026 (versión 1.1 del 23/10/2026) |
+| Estado | **APROBADO** por el autor el 23/10/2026 (Fase 0). Las decisiones posteriores se registran en §21; la 1.2 alinea el cuerpo del documento con el código del commit `e51d187` y los ajustes del 05/11/2026 (§21.11, §21.12). |
 | Autor y único desarrollador | John Edison Hernández Vargas |
 | Programa | Ingeniería de Software — Corporación Universitaria Iberoamericana |
 | Decisiones técnicas | [docs/decisions/](docs/decisions/) (ADR-001 a ADR-006) |
@@ -23,7 +23,7 @@ Este documento es la referencia oficial para construir el MVP. Si el código y e
 | — | Buenas prácticas de ingeniería de software | 4 |
 | — | Buenas prácticas de UX/UI | 5 |
 
-Lo que D1 y D3 describen como "implementado", "piloto" o "capacitación" se trata como **antecedente documental**. En este repositorio todavía no existe software (decisión P-3).
+Lo que D1 y D3 describen como "implementado", "piloto" o "capacitación" se trata como **antecedente documental**. El software de este repositorio se construyó desde cero a partir de este SPEC (decisión P-3); su estado real está en la [matriz de requisitos](docs/sustentacion/07-matriz-requisitos.md) y en el [historial de commits](docs/historial-commits.md).
 
 ---
 
@@ -57,14 +57,15 @@ Construir un prototipo web (MVP) para talleres mecánicos pequeños y medianos, 
 ### 2.1 Incluido
 
 - Usuarios y roles.
-- Clientes y vehículos.
-- Recepción del vehículo con apertura de la orden.
+- Clientes y vehículos (carros y motos, V-1), con el alta del cliente y su primer vehículo en una sola operación (O-8).
+- Recepción del vehículo con apertura de la orden, categoría del problema y observación del cliente (O-5).
 - Órdenes de trabajo con estados y mecánico asignado.
 - Mano de obra y repuestos registrados en la orden.
 - Inventario: entradas, salidas, ajustes, devoluciones y alertas de stock.
 - Liquidación de la orden, sin IVA.
 - Historial de mantenimiento del vehículo.
 - Seguimiento público por enlace.
+- Informe final en PDF de la orden entregada (O-2, O-3).
 - Dashboard y reportes.
 - Interfaz pensada primero para el celular.
 - Varios talleres en una sola instalación, con sus datos separados lógicamente (multi-tenant).
@@ -159,6 +160,12 @@ Prioridad según el método MoSCoW: *Must* (obligatorio), *Should* (importante),
 **Won't have (fuera de alcance):** todo lo listado en §2.2.
 
 Las funciones *Could* (RF-22 a RF-26) no tienen modelo de datos en esta versión. Si se aprueban, se agregan con un ADR nuevo o con una actualización del modelo.
+
+**Evolución después del MVP** (la redacción aprobada de cada requisito no cambia; el detalle está en §21.9 y §21.10):
+- **RF-04** incluye el tipo de vehículo, `CARRO` o `MOTO`, con filtro combinable con la placa (V-1 a V-3).
+- **RF-05** registra el motivo de ingreso como **categoría del problema** de un catálogo por tipo de vehículo más la **observación del cliente**; `motivo_ingreso` se conserva compuesto (O-5, O-6).
+- **RF-03** permite registrar al cliente junto con su primer vehículo (O-8, O-9).
+- **RF-23** (*Could*) queda **parcialmente cubierto** por el informe PDF final, que incluye la liquidación pero solo existe para órdenes entregadas (O-2). Se activó por pedido expreso del autor (cambio #4B).
 
 ---
 
@@ -280,6 +287,10 @@ El modelo tiene 12 tablas.
 - **Técnico:** es un `usuario` con rol `MECANICO`.
 - **Factura:** la liquidación se calcula a partir de las líneas de la orden (RN-06).
 - **Historial de mantenimiento:** es una consulta de las órdenes entregadas de un vehículo.
+- **Catálogo de categorías del problema:** es una lista fija en el código (`app/services/categorias.py`); la orden guarda el nombre (O-5).
+- **Informe PDF:** se genera al pedirlo a partir de la orden; no se guarda (O-2).
+
+**Cambios del modelo después de la Fase 0** (columnas, no tablas): `cliente.anonimizado`, `anonimizado_en` y `anonimizado_por` (migración 0005, §21.7); tipo `tipo_vehiculo` y `vehiculo.tipo` (0006, §21.9); `orden_trabajo.categoria_problema`, `categoria_otro` y `observacion_cliente` (0007, §21.10).
 
 El detalle completo (cardinalidades, restricciones y diagramas) está en [docs/modelo-datos.md](docs/modelo-datos.md).
 
@@ -310,7 +321,10 @@ Los endpoints concretos se definen y documentan en cada fase, mediante la docume
 - **Página pública de seguimiento:**
   - sin autenticación y con límite de solicitudes;
   - muestra el nombre del taller, el número de orden, la placa enmascarada, marca y modelo, el estado, la línea de tiempo y la liquidación;
-  - nunca muestra documento, teléfono ni correo.
+  - nunca muestra documento, teléfono ni correo;
+  - con la orden `ENTREGADO`, ofrece el informe PDF en `GET /api/v1/seguimiento/{codigo}/informe.pdf`, sin nombre, teléfono ni kilometraje y con la placa enmascarada. Como excepción aprobada (O-3), el PDF sí incluye la categoría, la observación, el diagnóstico y el trabajo realizado.
+- **Informe PDF interno:** `GET /api/v1/ordenes/{id}/informe.pdf`, para quien pueda ver la orden; 409 si no está `ENTREGADO` (O-2).
+- **Catálogo de categorías:** `GET /api/v1/catalogos/categorias-problema`, con sesión (O-5).
 - **Anonimización del cliente:** `POST /api/v1/clientes/{id}/anonimizar`, solo para el ADMIN, con el cuerpo `{"confirmacion": "ANONIMIZAR"}`. Sin la palabra responde 422; con órdenes abiertas o si ya está anonimizado, 409. La respuesta del cliente incluye `anonimizado`, `anonimizado_en` y, en el detalle, `anonimizador` (decisiones A-1 a A-7).
 
 ---
@@ -321,20 +335,20 @@ Los endpoints concretos se definen y documentan en cada fase, mediante la docume
 
 1. **Recepción**
    1. Buscar la placa.
-   2. Si no existe, registrar cliente y vehículo, con la autorización de datos.
-   3. Escribir el motivo de ingreso y el kilometraje.
+   2. Si no existe, registrar al cliente y su vehículo en un solo formulario, con la autorización de datos (O-8, O-9).
+   3. Elegir la categoría del problema, escribir la observación del cliente y el kilometraje (O-5).
    4. Asignar un mecánico.
    5. Crear la orden en estado `RECIBIDO`.
-   6. Enviar el enlace por WhatsApp.
+   6. Enviar el enlace por WhatsApp (hoy se copia; RF-20 está aplazado).
 2. **Taller**
    1. El mecánico abre "Mis órdenes".
    2. Pasa la orden a `EN_DIAGNOSTICO` y escribe el diagnóstico.
    3. Registra servicios y repuestos.
    4. Si falta un repuesto, pasa la orden a `ESPERANDO_REPUESTOS`.
    5. Al terminar, la pasa a `REPARADO`.
-3. **Entrega:** revisar la liquidación y pasar la orden a `ENTREGADO`.
+3. **Entrega:** revisar la liquidación, pasar la orden a `ENTREGADO` y descargar el informe PDF (O-2).
 4. **Inventario:** ver la alerta de stock bajo y registrar la entrada de mercancía.
-5. **Cliente:** abrir el enlace y ver el estado, la línea de tiempo y la liquidación.
+5. **Cliente:** abrir el enlace y ver el estado, la línea de tiempo y la liquidación; al entregar, descargar su informe (O-3).
 
 **Pantallas:**
 - Inicio de sesión.
@@ -348,7 +362,7 @@ Los endpoints concretos se definen y documentan en cada fase, mediante la docume
 - Administración: usuarios, servicios y datos del taller.
 - Seguimiento público.
 
-Los bocetos de cada pantalla están en el **Anexo A**.
+Los bocetos de cada pantalla están en el **Anexo A**. Reportes y Administración de servicios y datos del taller siguen sin construirse (RF-15 pendiente, RF-18 aplazado); las demás pantallas existen. La lista de Vehículos ya no tiene botón de alta propio (O-9).
 
 **Heurísticas de Nielsen aplicadas:**
 
@@ -383,39 +397,49 @@ Los bocetos de cada pantalla están en el **Anexo A**.
 - Se prueba en anchos de 360, 768, 1024 y 1440 px.
 - Contraste nivel AA.
 - Escala de espacios fija.
-- Sin degradados ni el estilo genérico de las interfaces generadas automáticamente.
+- Sin degradados ni el estilo genérico de las interfaces generadas automáticamente. **Excepción (T-2):** el fondo temático de cada módulo usa una máscara de degradado y una luz difusa detrás del contenido; los componentes no llevan degradados.
+- Terminología: la interfaz dice **«Cliente»** para la persona registrada con el vehículo, no «Dueño» (T-1).
+
+**Componentes agregados después del MVP:** `CamposVehiculo`, `FiltroTipoVehiculo`, `EtiquetaTipo`, `CamposProblema`, `FondoModulo`, `Logo` e `IlustracionTaller` (V-4, O-5, O-8, T-2).
 
 ---
 
-## 12. Comandos previstos
+## 12. Comandos
 
-Se confirman en la Fase 1.
+Confirmados en la Fase 1. Los de Python se ejecutan con `uv run` desde `backend/`.
 
 | Propósito | Backend | Frontend |
 |---|---|---|
-| Desarrollo | `uvicorn app.main:app --reload` | `npm run dev` |
-| Pruebas | `pytest` | — (lista de verificación manual, §15) |
-| Revisión de estilo y formato | `ruff check . && ruff format .` | `npm run lint` |
-| Migraciones de base de datos | `alembic upgrade head` | — |
+| Desarrollo | `uv run uvicorn app.main:app --reload` | `npm run dev` |
+| Pruebas | `uv run pytest` (263 al 05/11/2026) | — (lista de verificación manual, §15) |
+| Cobertura | `uv run --with pytest-cov pytest --cov=app` | — |
+| Revisión de estilo y formato | `uv run ruff check . && uv run ruff format .` | `npm run lint` |
+| Migraciones de base de datos | `uv run alembic upgrade head` | — |
 | Compilación | — | `npm run build` (el backend sirve la carpeta compilada) |
-| Crear un taller y su administrador | script de administración (ADR-006) | — |
+| Crear un taller y su administrador | `uv run python -m app.scripts.crear_taller` (ADR-006) | — |
+| Datos ficticios de demostración | `uv run python -m app.scripts.semilla_demo` | — |
 
 ---
 
-## 13. Estructura prevista del repositorio
+## 13. Estructura del repositorio
 
-Se crea en la Fase 1. No se crea nada antes de aprobar este SPEC.
+Creada en la Fase 1. El detalle por carpeta está en el [manual técnico](docs/sustentacion/03-manual-tecnico.md) §8.
 
 ```
 /
 ├── SPEC.md
+├── README.md
 ├── docs/
-│   ├── decisions/        ADR-001 … ADR-006
-│   ├── modelo-datos.md
-│   └── modelo-datos.dbml
-├── backend/              FastAPI: api/ · schemas/ · services/ · models/ · core/ · tests/
-├── frontend/             React + Vite + Tailwind
-└── *.md                  documentos de la tesis (D1, D2, D3)
+│   ├── decisions/              ADR-001 … ADR-006
+│   ├── modelo-datos.md / .dbml
+│   ├── historial-commits.md
+│   ├── guia-skills-diseno.md
+│   └── sustentacion/           manuales, informe, guiones y matriz (12 documentos)
+├── backend/                    FastAPI: api/ · schemas/ · services/ · models/ · core/ · scripts/ · tests/
+│                               alembic/ con las migraciones 0001 a 0007
+├── frontend/                   React + Vite + Tailwind: pages/ · components/ · assets/fondos/ · sesion/ · hooks/ · api/
+├── .claude/skills/             skills de diseño usadas en el rediseño (no forman parte de la aplicación)
+└── *.md                        documentos de la tesis (D1, D2, D3)
 ```
 
 ---
@@ -431,7 +455,7 @@ Se crea en la Fase 1. No se crea nada antes de aprobar este SPEC.
 - **JavaScript y React:**
   - `camelCase` para variables, `PascalCase` para componentes;
   - un componente por archivo, de menos de 200 líneas;
-  - ESLint y Prettier.
+  - ESLint y Prettier. **Estado real:** ESLint está configurado; Prettier **no** se configuró y el formato se mantiene a mano.
 - **Base de datos:**
   - tablas y columnas en `snake_case` y en singular;
   - restricciones con nombre explícito, por ejemplo `uq_vehiculo_taller_placa` o `ck_repuesto_stock_no_negativo`.
@@ -450,6 +474,8 @@ Se crea en la Fase 1. No se crea nada antes de aprobar este SPEC.
 | Interfaz | Lista de verificación manual por pantalla | Los cuatro anchos de pantalla, uso con teclado y estados vacío, de error y de carga | Obligatorio antes de cerrar cada fase |
 | Accesibilidad | Lighthouse o axe | Contraste y etiquetas | Fase 7 |
 | Pruebas automatizadas de extremo a extremo | — | Fuera de alcance por el tamaño del equipo | — |
+
+**Estado al 05/11/2026:** 263 pruebas pytest (200 funciones en 16 archivos), todas pasan; cobertura del backend del 91 % (97 % sin los scripts de consola). El detalle por archivo está en el [manual técnico](docs/sustentacion/03-manual-tecnico.md) §17.
 
 ---
 
@@ -755,9 +781,9 @@ El autor aprobó el estado del proyecto con la anonimización (commit `84f20f3`)
 
 La Semana 5 **no ha empezado** y solo empieza con la autorización expresa del autor.
 
-### 21.9 Rediseño visual y tipo de vehículo (04/11/2026, pendiente de aprobación del autor)
+### 21.9 Rediseño visual y tipo de vehículo (aprobadas por el autor el 04/11/2026)
 
-Cambio pedido por el autor antes de la Semana 5. No toca la lógica de negocio, los roles ni los datos existentes.
+Cambio pedido por el autor antes de la Semana 5. No toca la lógica de negocio, los roles ni los datos existentes. Implementado en el commit `e3fc487` (224 pruebas) y validado por el autor en local; la aprobación se registró el 05/11/2026.
 
 | ID | Decisión |
 |---|---|
@@ -782,6 +808,24 @@ Cambios #4, #4B, #5 y #6 pedidos por el autor antes de la Semana 5. No cambian l
 | O-7 | (#5) El buscador de categorías ignora tildes y mayúsculas («bateria» → «Problemas de batería», «fren» → «Problemas de frenos»); Enter elige la primera coincidencia. La lista cambia sola con el tipo del vehículo elegido. |
 | O-8 | (#6) `POST /clientes` acepta un objeto `vehiculo` opcional y crea cliente y vehículo en una sola transacción: si la placa ya existe o un dato del vehículo es inválido, no se guarda ninguno (errores con campo `vehiculo.<campo>`). La respuesta pasa a ser el detalle del cliente con sus vehículos (amplía la anterior; no quita campos). |
 | O-9 | (#6) «Nuevo cliente» incluye «Información del vehículo» (tipo, placa, marca, modelo, año, color), con la opción «Registrar sin vehículo por ahora». La lista de Vehículos ya no tiene el botón principal «+ Vehículo»; se agregan más vehículos desde la ficha del cliente («Vehículos asociados → Agregar vehículo»). `POST /vehiculos` y la pantalla `/vehiculos/nuevo` se conservan para ese uso. |
+
+**Dependencia nueva:** fpdf2 (O-4) se agregó con la aprobación de O-1 a O-9, como exige §16. Queda registrada también en [ADR-002](docs/decisions/ADR-002-backend.md). Pruebas al cerrar: 263.
+
+### 21.11 Terminología y fondos temáticos (05/11/2026, implementados, pendientes de commit)
+
+Ajustes visuales pedidos por el autor antes de la Semana 5. No cambian la base de datos, el API, los roles, los permisos ni la lógica de negocio.
+
+| ID | Decisión |
+|---|---|
+| T-1 | La interfaz dice **«Cliente»** en lugar de «Dueño» para la persona registrada con el vehículo, que puede ser el propietario, un familiar, un conductor o quien lo lleve al taller. Cambia en la lista y el detalle del vehículo, el formulario del vehículo (campo, error y ayuda), el selector de vehículo de la nueva orden y el único mensaje del backend que lo mostraba («El cliente del carro está inactivo. Actívelo antes de abrir la orden.»). Las decisiones ya aprobadas (S2-4, S3-3, A-5, RN-21…) conservan su redacción: allí «dueño» describe la titularidad del vehículo, que el modelo representa con `cliente_id`. |
+| T-2 | Cada módulo (Inicio, Órdenes, Clientes, Vehículos, Inventario y Usuarios) tiene una **escena de fondo** del mundo del taller: fachada con elevador, mecánico con el capó abierto, recepción con llaves, carro y moto con lupa de inspección, bodega de repuestos y equipo de mecánicos. Son ilustraciones vectoriales propias (SVG de menos de 2,5 KB), con el mismo trazo, la tinta `#115e59` y el carro de `IlustracionTaller`, y no fotografías: el vector no se pixela y no hay licencias de terceros. Los detalles y formularios heredan la escena de su módulo. El inicio de sesión y el seguimiento público no cambian. |
+| T-3 | La escena se pinta en una capa fija detrás del contenido, con **opacidad del 50 %** (elegida por el autor tras probar 12 %, 15 % y 30 %), una máscara de degradado que la desvanece hacia los títulos, una luz difusa en la esquina y un fundido de 500 ms al cambiar de módulo (sin animación con «reducir movimiento»). Es decorativa (`aria-hidden`, sin clics). **Limitación aceptada:** un texto gris que quede justo sobre una línea de la escena baja a un contraste de ~3:1, por debajo del 4,5:1 de RNF-07. Tarjetas, listas y formularios son opacos y no se afectan. Se corrige bajando `OPACIDAD_FONDO` en `FondoModulo.jsx`. |
+
+Verificación: lint y compilación sin errores; 263 pruebas pasan; capturas automáticas de 14 vistas en 1440 y 390 px, sin desplazamiento horizontal.
+
+### 21.12 Actualización de la documentación (05/11/2026)
+
+Se revisó toda la documentación contra el código: este SPEC (versión 1.2), el modelo de datos, ADR-002, el README, el historial de commits y los doce documentos de [docs/sustentacion/](docs/sustentacion/README.md), que describían el commit `84f20f3` (28/10/2026). Ahora describen el commit `e51d187` más los ajustes de §21.11. No se modificó código.
 
 ---
 

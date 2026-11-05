@@ -20,7 +20,7 @@ export default function SelectorCliente({ valor, alCambiar, error, ayuda, enlace
   return (
     <fieldset className="flex flex-col gap-1" aria-describedby={idDescripcion}>
       <legend className="mb-1 text-sm font-medium">
-        Dueño
+        Cliente
         <span className="text-peligro" aria-hidden="true">
           {' '}
           *

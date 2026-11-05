@@ -4,7 +4,7 @@
 |---|---|
 | Proyecto | Prototipo web para la gestión de los procesos operativos en talleres mecánicos de la zona norte de Cali |
 | Autor | John Edison Hernández Vargas — Ingeniería de Software, Corporación Universitaria Iberoamericana |
-| Corte | 28/10/2026 — commit `84f20f3` |
+| Corte | 05/11/2026 — commit `e51d187` más los ajustes visuales del 05/11/2026 (SPEC §21.11) |
 | Carácter | Anexo de sustentación. Resume la documentación extensa de esta carpeta |
 
 ---
@@ -32,24 +32,24 @@ El 85 % de los clientes encuestados quiere un canal digital para seguir el estad
 
 ## 2. Solución desarrollada
 
-**Qué hace.** Acompaña a cada vehículo desde que entra al taller hasta que se entrega, y le da al cliente un enlace para seguirlo desde su celular sin crear una cuenta.
+**Qué hace.** Acompaña a cada carro o moto desde que entra al taller hasta que se entrega con su informe final, y le da al cliente un enlace para seguirlo desde su celular sin crear una cuenta.
 
 **Cómo funciona.**
 
 ```
-Cliente → Vehículo → Orden de trabajo → Mecánico → Estados → Repuestos e inventario → Liquidación → Entrega
+Cliente + vehículo → Orden de trabajo → Mecánico → Estados → Repuestos e inventario → Liquidación → Entrega e informe PDF
                                                      ↘ Enlace de seguimiento para el cliente
 ```
 
-1. Recepción registra al cliente, con su autorización de datos, y su vehículo.
-2. Abre una orden de trabajo a partir de la placa y asigna un mecánico.
+1. Recepción registra al cliente, con su autorización de datos, y su vehículo en un solo formulario.
+2. Abre una orden de trabajo a partir de la placa, con la categoría del problema y lo que cuenta el cliente, y asigna un mecánico.
 3. El mecánico registra el diagnóstico, la mano de obra y los repuestos, y avanza los estados.
 4. Cada repuesto usado se descuenta del inventario y el sistema calcula el cobro.
-5. Recepción entrega el vehículo; el cliente ve todo el proceso desde su enlace.
+5. Recepción entrega el vehículo y descarga el informe PDF; el cliente ve todo el proceso desde su enlace y descarga su propio informe, sin datos personales.
 
-**Procesos que digitaliza:** recepción de vehículos, asignación del trabajo, seguimiento del servicio, control de inventario, liquidación, historial de mantenimiento, comunicación con el cliente y tratamiento de datos personales.
+**Procesos que digitaliza:** recepción de vehículos, asignación del trabajo, seguimiento del servicio, control de inventario, liquidación, historial de mantenimiento, comunicación con el cliente, constancia del servicio y tratamiento de datos personales.
 
-**Módulos:** acceso y usuarios · clientes · vehículos · órdenes y estados · asignación de mecánicos · inventario · repuestos y mano de obra en la orden · liquidación · seguimiento público · inicio (dashboard mínimo) · anonimización.
+**Módulos:** acceso y usuarios · clientes (con alta conjunta de vehículo) · vehículos (carros y motos) · órdenes y estados · categoría del problema · asignación de mecánicos · inventario · repuestos y mano de obra en la orden · liquidación · informe PDF · seguimiento público · inicio (dashboard mínimo) · anonimización.
 
 ---
 
@@ -61,13 +61,13 @@ Es un **monolito cliente-servidor por capas** con API REST. Se eligió por trata
 flowchart LR
     N["Navegador (celular o PC)<br/>React + Vite + Tailwind"] -- "HTTPS + cookie de sesión" --> A["FastAPI (Python 3.13)<br/>API → Servicios → SQLAlchemy"]
     C["Cliente sin cuenta<br/>/seguimiento/código"] -- "Consulta pública limitada" --> A
-    A --> D[("PostgreSQL 17<br/>12 tablas, 5 migraciones")]
+    A --> D[("PostgreSQL 17<br/>12 tablas, 7 migraciones")]
 ```
 
 | Componente | Implementación |
 |---|---|
-| **Frontend** | React con React Router, Vite y Tailwind CSS. Diseñado primero para el celular (desde 360 px), con el vocabulario del taller. El servidor lo entrega desde el mismo dominio |
-| **Backend** | FastAPI organizado en API (validación y permisos), servicios (reglas de negocio) y acceso a datos (SQLAlchemy 2). 35 operaciones de API documentadas automáticamente |
+| **Frontend** | React con React Router, Vite y Tailwind CSS. Diseñado primero para el celular (desde 360 px), con el vocabulario del taller, ilustraciones propias en SVG y un fondo temático por módulo. El servidor lo entrega desde el mismo dominio |
+| **Backend** | FastAPI organizado en API (validación y permisos), servicios (reglas de negocio) y acceso a datos (SQLAlchemy 2). 38 operaciones de API documentadas automáticamente. El informe PDF se genera en el servidor con fpdf2 |
 | **Base de datos** | PostgreSQL 17 con migraciones Alembic. Las reglas críticas se garantizan también en la base: restricciones CHECK, índices únicos parciales y relaciones que impiden borrar la historia |
 | **Autenticación** | Claves con hash argon2id; sesión con un token firmado en una cookie `httpOnly`; el usuario y su rol se vuelven a leer de la base en cada solicitud; mensaje genérico ante credenciales inválidas |
 | **Multi-taller** | Una sola instalación para varios talleres. Cada registro pertenece a un taller, que se toma siempre del usuario de la sesión. Un recurso de otro taller responde «no encontrado» |
@@ -80,15 +80,16 @@ flowchart LR
 | Funcionalidad | Qué permite | Estado |
 |---|---|---|
 | Usuarios y roles | Tres roles (Administrador, Recepción, Mecánico); crear, cambiar el rol, activar y desactivar | **Completa** (sin cambio de clave) |
-| Clientes | Registro con autorización obligatoria (Ley 1581), búsqueda, edición y desactivación | **Completa** |
-| Vehículos | Placa normalizada y única por taller, cambio de dueño, historial de mantenimiento | **Completa** |
-| Órdenes | Recepción desde la placa, consecutivo por taller, una sola orden abierta por vehículo | **Completa** |
+| Clientes | Registro con autorización obligatoria (Ley 1581) y con su primer vehículo en una sola operación, búsqueda, edición y desactivación | **Completa** |
+| Vehículos | Carros y motos; placa normalizada y única por taller; filtro por tipo combinado con la placa; cambio de cliente; historial de mantenimiento | **Completa** |
+| Órdenes | Recepción desde la placa con categoría del problema (22 para carro, 20 para moto) y observación del cliente; consecutivo por taller; una sola orden abierta por vehículo; vista en una columna | **Completa** |
 | Estados | Seis estados con historial (usuario, fecha y nota), cancelación con motivo, retroceso solo para el administrador | **Completa** |
 | Asignación de mecánicos | Asignar y reasignar con historial; vista «Mis órdenes»; carga por mecánico | **Completa** |
 | Inventario | Catálogo, entradas, ajustes por conteo físico, movimientos y alertas de stock | **Completa** |
 | Repuestos en la orden | Descuento automático del stock, devolución al quitar o cancelar, precio congelado | **Completa** |
 | Liquidación | Mano de obra + repuestos = total, calculado por el servidor, sin IVA | **Completa** |
 | Seguimiento público | Enlace sin cuenta, sin datos personales | **Completa** (falta publicarlo en internet) |
+| Informe PDF final | Constancia del servicio de una orden entregada, para el taller y, sin datos personales, para el cliente | **Completa** (cubre parcialmente RF-23) |
 | Dashboard | Órdenes por estado, entregados hoy y alertas de stock | **Parcial** (versión mínima aprobada) |
 | Anonimización | Borrado de datos personales conservando la historia, solo administrador, confirmación escrita y auditoría | **Completa** |
 
@@ -98,7 +99,8 @@ flowchart LR
 
 | Resultado | Valor |
 |---|---|
-| Pruebas automatizadas | **214**, todas pasan, ejecutadas contra PostgreSQL real |
+| Pruebas automatizadas | **263**, todas pasan, ejecutadas contra PostgreSQL real |
+| Cobertura del backend | **91 %** (97 % sin los scripts de consola) |
 | Pruebas de concurrencia | 3: número de orden, orden abierta única y stock nunca negativo |
 | Pruebas de aislamiento entre talleres | En cada recurso del sistema |
 | Requisitos obligatorios (*Must*) | 15 de 17 completos, 1 parcial, 1 pendiente |
@@ -106,9 +108,9 @@ flowchart LR
 | Validación de punta a punta (Semana 4) | 32 de 32 verificaciones correctas |
 | Calidad estática | Ruff (Python) y ESLint (JavaScript) sin hallazgos |
 
-**Validaciones manuales.** El autor validó cada entrega semanal con su demostración y su criterio de cierre: inicio de sesión y permisos; clientes y vehículos; órdenes y estados; y el flujo completo. También validó la anonimización en 11 puntos, entre ellos la restricción por rol, la conservación de órdenes y vehículos, el seguimiento después de anonimizar, el bloqueo con órdenes abiertas y la visualización en celular. Cada pantalla se revisó en cuatro anchos (360, 768, 1024 y 1440 px), con teclado y en los estados vacío, de error y de carga.
+**Validaciones manuales.** El autor validó cada entrega semanal con su demostración y su criterio de cierre: inicio de sesión y permisos; clientes y vehículos; órdenes y estados; y el flujo completo. También validó la anonimización en 11 puntos, entre ellos la restricción por rol, la conservación de órdenes y vehículos, el seguimiento después de anonimizar, el bloqueo con órdenes abiertas y la visualización en celular. El 04/11/2026 validó el informe PDF interno y público, el alta de cliente con vehículo, las categorías, la observación y la vista de la orden. Cada pantalla se revisó en cuatro anchos (360, 768, 1024 y 1440 px), con teclado y en los estados vacío, de error y de carga.
 
-**Evidencia de funcionamiento del MVP.** El flujo completo funciona de punta a punta en el entorno local: cliente → vehículo → orden → asignación → estados → inventario → liquidación → entrega → seguimiento del cliente → anonimización. Se usaron únicamente datos ficticios. El [guion de demostración](05-guion-demostracion.md) lo reproduce en vivo en 14 minutos.
+**Evidencia de funcionamiento del MVP.** El flujo completo funciona de punta a punta en el entorno local: cliente con vehículo → orden con categoría → asignación → estados → inventario → liquidación → entrega e informe PDF → seguimiento del cliente → anonimización. Se usaron únicamente datos ficticios. El [guion de demostración](05-guion-demostracion.md) lo reproduce en vivo en 14 minutos.
 
 ---
 
@@ -119,7 +121,8 @@ flowchart LR
 | **Organización del taller** | Cada vehículo tiene una orden con estado, responsable y fecha estimada; el inicio muestra cuántas órdenes hay en cada etapa |
 | **Trazabilidad** | Cada cambio de estado, asignación, repuesto y movimiento de inventario queda con fecha, hora y usuario; las órdenes y los movimientos nunca se borran |
 | **Control de inventario** | Descuento automático por orden, stock que nunca queda negativo, alertas de reposición y ajustes con motivo obligatorio |
-| **Seguimiento al cliente** | Enlace por orden para ver el estado y el cobro desde el celular, sin cuenta y sin llamar al taller |
+| **Seguimiento al cliente** | Enlace por orden para ver el estado y el cobro desde el celular, sin cuenta y sin llamar al taller, y descargar el informe al entregar |
+| **Datos para decidir** | La categoría del problema por tipo de vehículo permitirá conocer las fallas más frecuentes |
 | **Protección de datos** | Autorización obligatoria con fecha, datos mínimos, enlace público sin datos personales y anonimización auditada (Ley 1581 de 2012) |
 | **Separación entre talleres** | Varios talleres en una instalación, cada uno con acceso exclusivo a sus datos, comprobado con pruebas automatizadas |
 
@@ -129,14 +132,16 @@ flowchart LR
 
 **IMPLEMENTADO** (MVP terminado y validado en entorno local):
 - Inicio y cierre de sesión, tres roles y gestión de usuarios.
-- Clientes con autorización de datos; vehículos con historial de mantenimiento.
-- Órdenes de trabajo con seis estados, historial y asignación de mecánicos.
+- Clientes con autorización de datos, registrados junto con su primer vehículo; carros y motos con historial de mantenimiento y filtro por tipo.
+- Órdenes de trabajo con categoría del problema, observación del cliente, seis estados, historial y asignación de mecánicos.
 - Inventario con entradas, ajustes, movimientos y alertas.
 - Repuestos y mano de obra en la orden; liquidación sin IVA.
+- Informe PDF final de las órdenes entregadas.
 - Seguimiento público por enlace, sin datos personales.
 - Dashboard mínimo.
 - Anonimización de clientes con auditoría.
-- Aislamiento entre talleres y 214 pruebas automatizadas.
+- Interfaz rediseñada con terminología «Cliente» y fondos temáticos por módulo.
+- Aislamiento entre talleres y 263 pruebas automatizadas.
 
 **PENDIENTE** (planificado antes de la sustentación):
 - Despliegue en Render (aplicación) y Neon (base de datos) con HTTPS.
@@ -148,7 +153,7 @@ flowchart LR
 
 **TRABAJO FUTURO** (fuera del alcance actual):
 - Catálogo de servicios, botón de WhatsApp e historial del vehículo en el enlace del cliente.
-- Exportación a CSV, liquidación imprimible, citas y recordatorios de mantenimiento.
+- Exportación a CSV, impresión de la liquidación de una orden abierta, citas y recordatorios de mantenimiento.
 - Escalamiento a varias instancias y una pantalla de administración de talleres.
 - Facturación electrónica DIAN, pagos en línea y notificaciones automáticas (excluidas del prototipo).
 
@@ -174,9 +179,9 @@ flowchart LR
 
 ## 9. Mensaje final para los jurados
 
-**Qué se construyó.** Taller Digital, un prototipo web funcional para talleres mecánicos de la zona norte de Cali. Digitaliza la recepción de vehículos, las órdenes de trabajo con sus estados, la asignación de mecánicos, el inventario de repuestos, la liquidación y el seguimiento del cliente, e incorpora la protección de datos personales exigida por la ley colombiana. Lo sustentan una especificación formal, seis decisiones de arquitectura documentadas y una base de datos de doce tablas con sus reglas de integridad.
+**Qué se construyó.** Taller Digital, un prototipo web funcional para talleres mecánicos de la zona norte de Cali. Digitaliza la recepción de carros y motos, las órdenes de trabajo con sus estados y la categoría del problema, la asignación de mecánicos, el inventario de repuestos, la liquidación, el informe final y el seguimiento del cliente, e incorpora la protección de datos personales exigida por la ley colombiana. Lo sustentan una especificación formal, seis decisiones de arquitectura documentadas y una base de datos de doce tablas con sus reglas de integridad.
 
-**Qué se validó.** El flujo operativo completo funciona de punta a punta en el entorno local, con datos ficticios. Lo respaldan 214 pruebas automatizadas que pasan contra PostgreSQL real, entre ellas pruebas de concurrencia y de aislamiento entre talleres, y las validaciones funcionales del autor al cierre de cada entrega, incluida una verificación integral de 32 puntos y la validación de la anonimización.
+**Qué se validó.** El flujo operativo completo funciona de punta a punta en el entorno local, con datos ficticios. Lo respaldan 263 pruebas automatizadas, que cubren el 91 % del backend que pasan contra PostgreSQL real, entre ellas pruebas de concurrencia y de aislamiento entre talleres, y las validaciones funcionales del autor al cierre de cada entrega, incluida una verificación integral de 32 puntos y la validación de la anonimización.
 
 **Qué valor aporta.** Al taller le da organización, trazabilidad de cada acción, control confiable del inventario y cobros transparentes. Al cliente le da información oportuna sobre su vehículo sin exponer sus datos. A la investigación le aporta un instrumento que registra los tiempos de cada etapa del servicio, la base para medir el impacto planteado en la pregunta de investigación.
 

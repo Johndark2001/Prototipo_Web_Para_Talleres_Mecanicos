@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Para quién | Recepcionistas, administradores y mecánicos del taller |
-| Versión del sistema | Commit `84f20f3` (28/10/2026) |
+| Versión del sistema | Commit `e51d187` (04/11/2026) más los ajustes visuales del 05/11/2026 (SPEC §21.11) |
 | Dispositivos | Celular (desde 360 px de ancho), tableta o computador, con conexión a internet |
 
 ---
@@ -12,7 +12,9 @@
 
 ### Qué es Taller Digital
 
-Taller Digital es el sistema donde el taller registra a sus clientes y sus carros, recibe cada carro con una **orden de trabajo**, asigna el mecánico, sigue el avance de la reparación, descuenta los repuestos del inventario y calcula lo que se cobra. El cliente sigue su carro desde un **enlace** sin tener que crear una cuenta.
+Taller Digital es el sistema donde el taller registra a sus clientes y sus vehículos (**carros y motos**), recibe cada vehículo con una **orden de trabajo**, asigna el mecánico, sigue el avance de la reparación, descuenta los repuestos del inventario y calcula lo que se cobra. Al entregar, genera un **informe final en PDF**. El cliente sigue su vehículo desde un **enlace** sin tener que crear una cuenta.
+
+> En este manual, «carro» vale también para «moto» salvo que se diga lo contrario. El sistema llama **Cliente** a la persona registrada con el vehículo, sea el propietario, un familiar, un conductor o quien lo lleve al taller.
 
 ### Quién hace qué
 
@@ -22,6 +24,7 @@ Taller Digital es el sistema donde el taller registra a sus clientes y sus carro
 | Registrar y editar clientes y carros | Sí | Sí | Solo consulta |
 | Anonimizar a un cliente | Sí | No | No |
 | Abrir órdenes y asignar o reasignar mecánico | Sí | Sí | No |
+| Elegir o corregir la categoría del problema y la observación del cliente | Sí | Sí | Solo consulta |
 | Ver órdenes | Todas | Todas | Solo las asignadas a él |
 | Escribir diagnóstico y trabajo realizado; agregar mano de obra y repuestos | Sí | Sí | Solo en sus órdenes |
 | Iniciar diagnóstico, pasar a «Esperando repuestos», marcar reparado | Sí | No | Sí, en sus órdenes |
@@ -31,6 +34,7 @@ Taller Digital es el sistema donde el taller registra a sus clientes y sus carro
 | Consultar el inventario | Sí | Sí | Sí |
 | Ver el resumen del taller en Inicio | Sí | Sí | No (ve «Mis órdenes abiertas») |
 | Copiar el enlace de seguimiento para el cliente | Sí | Sí | No |
+| Descargar el informe PDF de una orden entregada | Sí | Sí | Sí, de sus órdenes |
 
 ### Cómo se mueve uno por el sistema
 
@@ -38,6 +42,7 @@ Taller Digital es el sistema donde el taller registra a sus clientes y sus carro
 - **En el celular**, el menú está abajo, al alcance del pulgar.
 - Las opciones del menú son: **Inicio**, **Órdenes** (para el mecánico se llama **Mis órdenes**), **Clientes**, **Vehículos**, **Inventario** y **Usuarios** (esta última solo la ve el administrador).
 - Arriba siempre está el nombre del taller, su nombre con su rol, el buscador **Buscar placa** y el botón **Salir**.
+- Cada módulo tiene de fondo una ilustración del taller (la fachada en Inicio, un mecánico trabajando en Órdenes, la recepción en Clientes, un carro y una moto en Vehículos, la bodega en Inventario y el equipo en Usuarios). Es solo decorativa: no se toca ni cambia nada.
 
 ### Los estados de una orden
 
@@ -149,29 +154,41 @@ Una orden se puede cancelar desde cualquier estado excepto Entregado o Cancelada
 
 ## 3. Gestión de clientes
 
-**Objetivo.** Tener en un solo lugar los datos de contacto de los dueños de los carros, con su autorización de tratamiento de datos (Ley 1581 de 2012).
+**Objetivo.** Tener en un solo lugar los datos de contacto de los clientes que traen los vehículos, con su autorización de tratamiento de datos (Ley 1581 de 2012), y registrar su primer vehículo en el mismo paso.
 
-**Cuándo utilizarla.** Cuando llega un cliente por primera vez, cuando cambia su teléfono o correo, o cuando hay que buscar a quién pertenece un carro.
+**Cuándo utilizarla.** Cuando llega un cliente por primera vez, cuando cambia su teléfono o correo, o cuando hay que buscar a nombre de quién está un vehículo.
 
 **Quién.** Administrador y Recepción crean y editan. El mecánico solo consulta.
 
-**Paso a paso — registrar un cliente**
+**Paso a paso — registrar un cliente con su vehículo (un solo proceso)**
 
 1. Entre a **Clientes** y toque **+ Cliente**.
-2. Complete **Nuevo cliente**:
+2. Complete los datos del cliente en **Nuevo cliente**:
    - **Nombre** (obligatorio).
    - **Teléfono** (obligatorio). Puede escribirlo con espacios, por ejemplo «300 123 4567»; el sistema los quita.
    - **Correo** (opcional).
    - **Documento** (opcional). Cédula o NIT; pídalo solo si el cliente lo quiere dar.
-3. **Lea al cliente** la autorización y, si acepta, marque la casilla **«El cliente autoriza el tratamiento de sus datos personales (Ley 1581 de 2012)»**. Sin esta casilla el sistema no registra al cliente.
-4. Toque **Guardar cliente**.
+3. En **Información del vehículo**, complete el vehículo con el que llega:
+   - **Tipo de vehículo**: **Carro** o **Moto**.
+   - **Placa** (obligatoria), **Marca** y **Modelo** (obligatorios), **Año** y **Color** (opcionales). Las reglas son las de la sección 4.
+   - Si el cliente todavía no trae vehículo, marque **Registrar sin vehículo por ahora**. Podrá agregarlo después desde su ficha.
+4. **Lea al cliente** la autorización y, si acepta, marque la casilla **«El cliente autoriza el tratamiento de sus datos personales (Ley 1581 de 2012)»**. Sin esta casilla el sistema no registra al cliente.
+5. Toque **Guardar cliente**.
+
+Cliente y vehículo se guardan **juntos o no se guarda ninguno**: si la placa ya existe o un dato del vehículo está mal, el sistema no registra al cliente a medias y marca el campo que hay que corregir. El vehículo queda asociado al cliente automáticamente.
+
+**Paso a paso — agregar otro vehículo a un cliente**
+
+1. Abra el cliente. En **Vehículos asociados** verá sus carros y motos.
+2. Toque **Agregar vehículo**. El cliente ya queda elegido.
+3. Complete el vehículo (sección 4) y guárdelo.
 
 **Paso a paso — buscar un cliente**
 
 1. Entre a **Clientes**.
 2. Escriba en **Buscar por nombre, teléfono o documento**. La lista se filtra mientras escribe.
 3. Para ver también los clientes desactivados, marque **Incluir inactivos**.
-4. Toque el cliente para abrir su detalle: teléfono, correo, documento, fecha de autorización y sus carros.
+4. Toque el cliente para abrir su detalle: teléfono, correo, documento, fecha de autorización y sus **Vehículos asociados**.
 
 **Paso a paso — editar o desactivar**
 
@@ -180,7 +197,7 @@ Una orden se puede cancelar desde cualquier estado excepto Entregado o Cancelada
 
 **Resultado esperado**
 
-- Aparece «Cliente [nombre] registrado» y se abre su detalle.
+- Aparece «Cliente [nombre] registrado con el vehículo [placa]» (o «Cliente [nombre] registrado» si se registró sin vehículo) y se abre su detalle, con el vehículo en **Vehículos asociados**.
 - El detalle muestra «Autorizó el [fecha]»: es la fecha en que el sistema registró la autorización.
 
 **Errores comunes**
@@ -191,6 +208,7 @@ Una orden se puede cancelar desde cualquier estado excepto Entregado o Cancelada
 | «Escriba un teléfono de 7 a 15 dígitos» | El teléfono tiene letras o muy pocos números. | Escriba solo números; se admite un «+» al inicio. |
 | «Correo no válido» | Falta la @ o el dominio. | Corrija el correo o déjelo vacío. |
 | «Ya existe un cliente con ese documento en el taller» | Ese documento ya está registrado. | Busque al cliente por su documento: probablemente ya existe. |
+| «Ya existe un carro con la placa … en el taller», marcado en la placa de **Información del vehículo** | El vehículo ya está registrado, quizá a nombre de otro cliente. No se guardó nada. | Busque la placa con **Buscar placa**. Si el vehículo pasó a esta persona, regístrela **sin vehículo** y cambie el cliente en el vehículo (sección 4). |
 | «Los datos de este cliente fueron anonimizados y ya no se pueden modificar» | El cliente fue anonimizado (ver sección 13). | Si la persona volvió, regístrela como cliente nuevo. |
 
 > **Recuerde:** pida solo los datos necesarios. El correo y el documento son opcionales.
@@ -199,35 +217,42 @@ Una orden se puede cancelar desde cualquier estado excepto Entregado o Cancelada
 
 ## 4. Gestión de vehículos
 
-**Objetivo.** Registrar cada carro o moto a nombre de su dueño, con placa única, y consultar su historial de mantenimiento.
+**Objetivo.** Registrar cada carro o moto a nombre de su cliente, con placa única, y consultar su historial de mantenimiento.
 
-**Cuándo utilizarla.** Cuando un carro llega por primera vez, cuando cambia de dueño o cuando necesita ver qué se le ha hecho antes.
+**Cuándo utilizarla.** Cuando un vehículo llega por primera vez, cuando pasa a otra persona o cuando necesita ver qué se le ha hecho antes.
 
 **Quién.** Administrador y Recepción registran y editan. El mecánico solo consulta.
 
-**Paso a paso — registrar un carro**
+**Paso a paso — registrar un vehículo**
 
-1. Puede empezar de tres formas:
-   - desde el detalle del cliente, con **+ Carro** (el dueño queda elegido);
-   - desde **Vehículos**, con **+ Carro**;
+1. El primer vehículo de un cliente nuevo se registra **junto con el cliente** (sección 3). Para los demás casos hay dos formas:
+   - desde el detalle del cliente, en **Vehículos asociados → Agregar vehículo** (el cliente queda elegido);
    - desde **Nueva orden**, con el enlace **Registrar el carro** cuando la placa no existe.
-2. Complete **Nuevo carro**:
+
+   La lista **Vehículos** ya no tiene botón para crear: cada vehículo se registra a nombre de un cliente.
+2. Complete el formulario:
+   - **Tipo de vehículo**: **Carro** o **Moto**. Los ejemplos de marca y modelo cambian según el tipo.
    - **Placa** (obligatoria). Escríbala sin espacios ni guiones; si los pone, se corrige sola al salir del campo. Debe tener de 5 a 7 letras o números.
-   - **Marca** y **Modelo** (obligatorios). Por ejemplo, «Mazda» y «3».
+   - **Marca** y **Modelo** (obligatorios). Por ejemplo, «Mazda» y «3», o «Yamaha» y «FZ 2.0».
    - **Año** y **Color** (opcionales).
-   - **Dueño**: busque y elija un cliente activo.
-3. Toque **Guardar carro**.
+   - **Cliente**: busque y elija un cliente activo. Si es nuevo, use el enlace para registrarlo; los datos del vehículo pasan al formulario del cliente.
+3. Toque **Guardar carro** (o **Guardar moto**).
 
-**Paso a paso — buscar un carro**
+**Paso a paso — buscar y filtrar vehículos**
 
-- **Rápido:** escriba la placa en **Buscar placa**, arriba, y presione Enter. Si la placa existe, se abre el carro; si no, se ven las coincidencias parciales.
-- **Desde Vehículos:** escriba la placa completa o una parte, por ejemplo «ABC» o «123».
+- **Rápido:** escriba la placa en **Buscar placa**, arriba, y presione Enter. Si la placa existe, se abre el vehículo; si no, se ven las coincidencias parciales.
+- **Desde Vehículos:**
+  1. Elija **Todos**, **Carros** o **Motos** en el control de tipo.
+  2. Escriba la placa completa o una parte, por ejemplo «ABC» o «123».
+  3. Marque **Incluir inactivos** si quiere ver también los desactivados.
 
-**Paso a paso — cambiar el dueño (venta del carro)**
+  Los tres filtros se combinan: por ejemplo, **Motos** + «JKL» muestra solo las motos cuya placa contiene «JKL». Cada vehículo de la lista muestra su placa, marca, modelo y año, el tipo (con ícono y texto) y **Cliente: [nombre]**.
 
-1. En el detalle del carro, toque **Editar**.
-2. Cambie el dueño. Hágalo solo si el carro se vendió.
-3. Toque **Guardar cambios**. Las órdenes anteriores conservan al dueño que tenían en su momento.
+**Paso a paso — cambiar el cliente del vehículo**
+
+1. En el detalle del vehículo, toque **Editar**.
+2. Cambie el **Cliente**. Hágalo solo si el vehículo pasó a otra persona (por ejemplo, se vendió).
+3. Toque **Guardar cambios**. Las órdenes anteriores conservan el cliente que tenían.
 
 **Paso a paso — ver el historial de mantenimiento**
 
@@ -237,42 +262,56 @@ Una orden se puede cancelar desde cualquier estado excepto Entregado o Cancelada
 
 **Resultado esperado**
 
-- Aparece «Carro [placa] registrado» y se abre el detalle **Carro de placa [placa]**, con su dueño y su historial.
+- Aparece «Carro [placa] registrado» (o «Moto [placa] registrada») y se abre el detalle del vehículo, con el recuadro **Cliente** y su historial.
 
 **Errores comunes**
 
 | Lo que ve | Por qué pasa | Qué hacer |
 |---|---|---|
-| «Ya existe un carro con la placa … en el taller» | La placa ya está registrada en este taller. | Búsquela con **Buscar placa**. |
-| «El cliente está inactivo. Actívelo antes de asociarle un carro.» | El dueño elegido está desactivado. | Active al cliente o elija otro. |
+| «Ya existe un carro con la placa … en el taller» | La placa ya está registrada en este taller (también si es una moto). | Búsquela con **Buscar placa**. |
+| «El cliente está inactivo. Actívelo antes de asociarle un carro.» | El cliente elegido está desactivado. | Active al cliente o elija otro. |
 | «La placa debe tener entre 5 y 7 letras o números, por ejemplo ABC123» | La placa es muy corta o muy larga. | Revise la placa. |
-| «Elija el dueño del carro» | No se eligió el cliente. | Busque y elija al dueño. |
+| «Elija el cliente del carro» (o «de la moto») | No se eligió el cliente. | Busque y elija al cliente. |
+| Una moto aparece como carro | Los vehículos registrados antes de existir el tipo quedaron como carros. | Edítela y cambie el **Tipo de vehículo** a **Moto**. |
 
 ---
 
 ## 5. Apertura de órdenes (recepción del carro)
 
-**Objetivo.** Recibir el carro y dejar registrado por qué entra, con qué kilometraje y cuándo se espera entregar.
+**Objetivo.** Recibir el vehículo y dejar registrado qué tipo de problema trae, qué cuenta el cliente, con qué kilometraje llega y cuándo se espera entregar.
 
-**Cuándo utilizarla.** Cada vez que un carro entra al taller para cualquier trabajo.
+**Cuándo utilizarla.** Cada vez que un carro o una moto entra al taller para cualquier trabajo.
 
 **Quién.** Administrador y Recepción.
 
 **Paso a paso**
 
-1. Toque **Nueva orden** en Inicio o en Órdenes. Si está viendo el carro, toque **Nueva orden para este carro**: así el carro ya queda elegido y se ahorra un paso.
-2. En **Placa del carro**, escriba la placa. El sistema muestra los carros activos que coinciden; toque el correcto. Verá la placa, la marca, el modelo y el dueño.
-   - Si el carro no existe, toque **Registrar el carro** (sección 4) y luego vuelva.
-3. Escriba el **Motivo de ingreso**, con las palabras del cliente. Por ejemplo: «ruido en la suspensión».
-4. Escriba el **Kilometraje** (opcional, recomendado).
-5. Elija la **Entrega estimada** (opcional). No puede ser anterior a hoy.
-6. Elija el **Mecánico** (opcional). Puede asignarlo después.
-7. Toque **Abrir orden**.
+1. Toque **Nueva orden** en Inicio o en Órdenes. Si está viendo el vehículo, toque **Nueva orden para este carro**: así el vehículo ya queda elegido y se ahorra un paso.
+2. En **Placa del carro**, escriba la placa. El sistema muestra los vehículos activos que coinciden; toque el correcto. Verá la placa, la marca, el modelo y **Cliente: [nombre]**.
+   - Si el vehículo no existe, toque **Registrar el carro** (sección 4) y luego vuelva.
+3. En **Categoría del problema**, busque y elija la categoría. La lista depende del tipo: **22 categorías para carros y 20 para motos**, y cambia sola si elige otro vehículo.
+   - El buscador no distingue tildes ni mayúsculas: «bateria» encuentra «Problemas de batería» y «fren» encuentra «Problemas de frenos». **Enter** elige la primera coincidencia.
+   - Si ninguna aplica, elija **Otro** y escriba el problema en **Describa el problema** (obligatorio en ese caso). Por ejemplo: «Vidrio eléctrico no sube».
+4. En **Observación reportada por el cliente**, escriba lo que el cliente cuenta, con sus palabras. Por ejemplo: «El cliente indica que escucha un ruido metálico al frenar.»
+5. Escriba el **Kilometraje** (opcional, recomendado).
+6. Elija la **Entrega estimada** (opcional). No puede ser anterior a hoy.
+7. Elija el **Mecánico** (opcional). Puede asignarlo después.
+8. Toque **Abrir orden**.
+
+**Paso a paso — corregir los datos de recepción**
+
+Si la categoría, la observación, el kilometraje o la entrega estimada quedaron mal, Recepción o el Administrador pueden corregirlos mientras la orden esté abierta:
+
+1. En la orden, sección **Información general**, toque **Corregir datos de recepción**.
+2. Cambie lo necesario y toque **Guardar**.
+
+Las órdenes registradas antes de existir el catálogo muestran **«Sin categoría (orden registrada antes del catálogo)»**. Al corregirlas se les puede asignar una.
 
 **Resultado esperado**
 
 - Aparece «Orden #[número] abierta para [placa]» y se abre el detalle de la orden en estado **Recibido**.
 - El número es consecutivo dentro de su taller.
+- En **Información general** quedan la categoría y la observación del cliente.
 - El historial muestra «Abrió la orden», con su nombre, la fecha y la hora.
 
 **Errores comunes**
@@ -281,8 +320,11 @@ Una orden se puede cancelar desde cualquier estado excepto Entregado o Cancelada
 |---|---|---|
 | «El carro [placa] ya tiene una orden abierta» y el enlace **Ver la orden** | Un carro solo puede tener una orden abierta a la vez (RN-08). | Abra la orden existente. |
 | «El carro está inactivo. Actívelo antes de recibirlo.» | El carro fue desactivado. | Actívelo desde su detalle (**Activar**). |
-| «El dueño del carro está inactivo. Actívelo antes de abrir la orden.» | El cliente está desactivado o fue anonimizado. | Active al cliente. Si fue anonimizado, registre al nuevo dueño y cámbielo en el carro. |
-| «Busque y elija el carro» | No se tocó ningún carro de la lista. | Escriba la placa y elija el carro. |
+| «El cliente del carro está inactivo. Actívelo antes de abrir la orden.» | El cliente está desactivado o fue anonimizado. | Active al cliente. Si fue anonimizado, registre a la persona que trae el vehículo y cámbiela en el vehículo. |
+| «Busque y elija el vehículo» | No se tocó ningún vehículo de la lista. | Escriba la placa y elija el vehículo. |
+| «Elija la categoría del problema» | No se eligió una categoría. | Búsquela y elíjala; si ninguna aplica, elija **Otro**. |
+| La lista de categorías dice «Elija primero el vehículo» | Las categorías dependen de si es carro o moto. | Elija el vehículo primero. |
+| «Ninguna categoría coincide con …» | Lo escrito no está en el catálogo. | Pruebe con otra palabra o elija **Otro** y descríbalo. |
 | «La fecha estimada de entrega no puede ser anterior a hoy» | Se eligió una fecha pasada. | Elija hoy o una fecha posterior. |
 
 ---
@@ -340,15 +382,32 @@ Una orden se puede cancelar desde cualquier estado excepto Entregado o Cancelada
 
 El sistema **solo muestra los botones que usted puede usar** en el estado actual.
 
+### Cómo está organizada la orden
+
+La orden se lee de arriba abajo, en una sola columna, en el mismo orden en el celular y en el computador:
+
+| N.º | Sección | Qué contiene |
+|---|---|---|
+| 1 | Encabezado | Número de orden, placa, vehículo, cliente y estado |
+| 2 | **Estado de la orden** | La línea de tiempo con el estado actual |
+| 3 | **Acciones** | Los botones de cambio de estado y, si la orden fue entregada, **Descargar informe PDF** |
+| 4 | **Información general** | Los datos de recepción (categoría del problema, observación del cliente, kilometraje, quién la recibió y cuándo, entrega estimada) y el recuadro **Mecánico** |
+| 5 | **Diagnóstico** | Lo que encontró el mecánico |
+| 6 | **Trabajo realizado** | Lo que se le hizo al vehículo |
+| 7 | **Costos** | Mano de obra, repuestos y total |
+| 8 | **Enlace de seguimiento** | El enlace para el cliente |
+| 9 | **Historial** | Cambios de estado y asignaciones |
+
 ### 7.1 Para el mecánico: trabajar una orden
 
 1. Entre a **Mis órdenes**, o mire «Mis órdenes abiertas» en Inicio, y abra la orden.
 2. Toque **Iniciar diagnóstico**. Si el sistema muestra «Asigne un mecánico para iniciar el diagnóstico», la orden no tiene mecánico y debe asignarla Recepción.
-3. En **Trabajo en el carro**, escriba el **Diagnóstico**: qué encontró al revisar el carro. Toque **Guardar**. Si ve «Cambios sin guardar», todavía no ha guardado.
-4. Registre la mano de obra y los repuestos (secciones 9 y 10).
-5. Si falta un repuesto, toque **Esperando repuestos**. En el cuadro puede escribir **Qué repuesto falta** (opcional) y luego tocar **Confirmar**.
-6. Al terminar, escriba el **Trabajo realizado**: es obligatorio para marcar la orden como reparada.
-7. Toque **Marcar reparado**. Si escribió algo sin guardar, el sistema lo guarda antes de cambiar el estado.
+3. Lea en **Información general** la categoría del problema y la observación del cliente.
+4. En la sección **Diagnóstico**, escriba qué encontró al revisar el vehículo. Toque **Guardar**. Si ve «Cambios sin guardar», todavía no ha guardado.
+5. Registre la mano de obra y los repuestos en **Costos** (secciones 9 y 10).
+6. Si falta un repuesto, toque **Esperando repuestos**. En el cuadro puede escribir **Qué repuesto falta** (opcional) y luego tocar **Confirmar**.
+7. Al terminar, escriba en la sección **Trabajo realizado** lo que se hizo: es obligatorio para marcar la orden como reparada. **Guardar** en cualquiera de las dos secciones guarda el diagnóstico y el trabajo realizado juntos.
+8. Toque **Marcar reparado**. Si escribió algo sin guardar, el sistema lo guarda antes de cambiar el estado.
 
 ### 7.2 Cancelar una orden
 
@@ -467,7 +526,7 @@ Para editarlo: abra el repuesto, toque **Editar** y luego **Guardar cambios**. P
 
 **Paso a paso**
 
-1. En la orden, sección **Mano de obra, repuestos y total**, toque **+ Repuesto**.
+1. En la orden, sección **Costos** (recuadro **Mano de obra, repuestos y total**), toque **+ Repuesto**.
 2. En **Repuesto**, escriba el nombre o el código. La lista muestra el precio, la unidad y cuánto hay. Los repuestos agotados aparecen pero no se pueden elegir.
 3. Elija el repuesto y escriba la **Cantidad**. Se admiten decimales, por ejemplo «4,5» litros de aceite.
 4. Toque **Agregar repuesto**.
@@ -502,7 +561,7 @@ Para editarlo: abra el repuesto, toque **Editar** y luego **Guardar cambios**. P
 
 **Paso a paso — agregar mano de obra**
 
-1. En la orden, sección **Mano de obra, repuestos y total**, toque **+ Mano de obra**.
+1. En la orden, sección **Costos** (recuadro **Mano de obra, repuestos y total**), toque **+ Mano de obra**.
 2. Escriba el **Trabajo realizado**, por ejemplo «Cambio de pastillas» o «Alineación».
 3. Escriba el **Valor (pesos)** en pesos enteros, por ejemplo «40.000».
 4. Cambie la **Cantidad** si aplica (por defecto es 1).
@@ -545,24 +604,59 @@ Para editarlo: abra el repuesto, toque **Editar** y luego **Guardar cambios**. P
 **Paso a paso**
 
 1. Abra la orden. Debe estar en **Reparado**.
-2. Revise con el cliente la sección **Mano de obra, repuestos y total**.
+2. Revise con el cliente la sección **Costos**.
 3. Toque **Entregar**.
 4. Confirme en el cuadro **«¿Entregar el carro [placa]?»**: la orden se cierra como entregada y ya no se podrá modificar.
+5. En **Acciones** aparece **«La orden fue entregada. Descargue el informe final para el cliente.»** Toque **Descargar informe PDF** si quiere imprimirlo o enviárselo (sección 11.1).
 
 **Resultado esperado**
 
 - La orden pasa a **Entregado**, con fecha y hora en **Entregado**.
-- Aparece en el historial de mantenimiento del carro.
+- Aparece en el historial de mantenimiento del vehículo.
 - Cuenta en **Entregados hoy** en Inicio.
-- El enlace del cliente muestra «Su carro ya fue entregado. Gracias por su confianza.»
-- El carro ya puede recibir una orden nueva.
+- El enlace del cliente muestra «Su carro ya fue entregado. Gracias por su confianza.» y el botón **Descargar informe PDF**.
+- El vehículo ya puede recibir una orden nueva.
 
 **Errores comunes**
 
 | Lo que ve | Por qué pasa | Qué hacer |
 |---|---|---|
 | No aparece el botón Entregar | La orden no está en Reparado, o su rol es Mecánico. | El mecánico debe marcarla como reparada. |
-| Entregó por error | Entregado es un estado final y no se deshace. | Si el carro vuelve, abra una orden nueva; deje la explicación en el motivo de ingreso. |
+| Entregó por error | Entregado es un estado final y no se deshace. | Si el vehículo vuelve, abra una orden nueva; deje la explicación en la observación. |
+
+### 11.1 Informe final en PDF
+
+**Objetivo.** Entregar al cliente una constancia del servicio: qué se encontró, qué se hizo y cuánto costó.
+
+**Cuándo utilizarla.** Después de entregar el vehículo. **Solo existe para órdenes en estado Entregado**: en cualquier otro estado, incluida Cancelada, el botón no aparece y el sistema no lo genera.
+
+**Quién.** Cualquier usuario que pueda ver la orden. El mecánico, solo de sus órdenes. El cliente también lo descarga desde su enlace (sección 12).
+
+**Paso a paso**
+
+1. Abra la orden entregada.
+2. En **Acciones**, toque **Descargar informe PDF**.
+3. El archivo se descarga con el nombre `informe-orden-[número].pdf`.
+
+**Qué contiene el informe del taller**
+
+- Datos del taller, número de orden y fechas de ingreso y de entrega.
+- Cliente (nombre y teléfono) y vehículo (tipo, placa, marca, modelo, kilometraje).
+- Categoría del problema, observación del cliente, diagnóstico y trabajo realizado.
+- Mano de obra, repuestos y total (sin IVA).
+- Historial de estados con fechas, **sin notas internas ni nombres de empleados**.
+- Un mensaje de agradecimiento.
+
+Las fechas aparecen en hora de Colombia. Si un texto tiene emoji o comillas tipográficas, el PDF los reemplaza por caracteres simples.
+
+**Errores comunes**
+
+| Lo que ve | Por qué pasa | Qué hacer |
+|---|---|---|
+| No aparece **Descargar informe PDF** | La orden no está entregada. | Entregue primero el vehículo (sección 11). |
+| «El informe PDF solo está disponible cuando la orden fue entregada» | Se intentó abrir el informe de una orden abierta o cancelada. | Igual que el caso anterior. |
+
+> El informe **no es una factura electrónica**: es una constancia del servicio.
 
 ---
 
@@ -588,8 +682,11 @@ Para editarlo: abra el repuesto, toque **Editar** y luego **Guardar cambios**. P
 - La línea de tiempo de los estados con fechas.
 - La mano de obra, los repuestos y el total, con la nota «Valores sin IVA. Pueden cambiar mientras el carro esté en el taller.»
 - Un botón **Actualizar**.
+- Cuando la orden fue entregada, el botón **Descargar informe PDF**.
 
-**Lo que el cliente NO ve:** su nombre, teléfono, documento o correo; la placa completa; el kilometraje; el motivo de ingreso; las notas internas; ni los nombres de los empleados.
+**Lo que el cliente NO ve en la página:** su nombre, teléfono, documento o correo; la placa completa; el kilometraje; la categoría, la observación, el diagnóstico y el trabajo realizado; las notas internas; ni los nombres de los empleados.
+
+**El informe PDF del enlace** es el mismo de la sección 11.1, con estas diferencias para proteger los datos: **no** trae el nombre ni el teléfono del cliente ni el kilometraje, y la placa va enmascarada («ABC***»). **Sí** trae la categoría, la observación, el diagnóstico y el trabajo realizado, porque es la constancia del servicio que ya terminó (excepción aprobada por el autor, SPEC §21.10, O-3).
 
 **Resultado esperado.** El cliente abre el enlace en su celular y ve el estado al momento.
 
@@ -600,7 +697,7 @@ Para editarlo: abra el repuesto, toque **Editar** y luego **Guardar cambios**. P
 | «No encontramos esta orden — Revise que el enlace esté completo o pídale uno nuevo al taller.» | El enlace se copió incompleto. | Cópielo de nuevo desde la orden y reenvíelo. |
 | «Demasiadas consultas seguidas. Espere un minuto.» | Se hicieron más de 30 consultas en un minuto desde la misma conexión. | Esperar un minuto. |
 
-> Trate el enlace como información del cliente: quien lo tenga puede ver el estado de esa orden. Envíelo solo al dueño.
+> Trate el enlace como información del cliente: quien lo tenga puede ver el estado de esa orden y, cuando se entregue, descargar su informe. Envíelo solo al cliente que trajo el vehículo.
 
 ---
 
@@ -646,7 +743,7 @@ Para editarlo: abra el repuesto, toque **Editar** y luego **Guardar cambios**. P
 | «Este cliente ya fue anonimizado» | La acción ya se hizo antes. | No hay que hacer nada más. |
 | No aparece el botón Anonimizar | Su rol no es Administrador, o el cliente ya está anonimizado. | Pida la acción al Administrador. |
 
-**Limitación conocida:** los textos libres de las órdenes (motivo de ingreso, diagnóstico, trabajo realizado y notas) **no se modifican**. Por eso nunca escriba datos personales del cliente en esos campos.
+**Limitación conocida:** los textos libres de las órdenes (observación del cliente, descripción de «Otro», diagnóstico, trabajo realizado y notas) **no se modifican**. Por eso nunca escriba datos personales del cliente en esos campos: además, la observación, el diagnóstico y el trabajo realizado aparecen en el informe PDF público.
 
 ---
 
@@ -661,3 +758,6 @@ Para editarlo: abra el repuesto, toque **Editar** y luego **Guardar cambios**. P
 | ¿Puedo cambiar mi clave? | En esta versión no hay una pantalla para hacerlo. Es una función pendiente. |
 | ¿Puedo ver datos de otro taller? | No. Cada taller ve solo lo suyo. |
 | ¿Hay reportes de tiempos? | Todavía no. Los datos se registran desde el primer cambio de estado; los reportes están pendientes (Semana 5). |
+| ¿El sistema maneja motos? | Sí. Cada vehículo es **Carro** o **Moto**; la lista de Vehículos los filtra y las categorías del problema cambian según el tipo. |
+| ¿Puedo imprimir lo que se le hizo al vehículo? | Sí, cuando la orden está entregada: **Descargar informe PDF** (sección 11.1). |
+| ¿Por qué dice «Cliente» y no «Dueño»? | Porque quien trae el vehículo no siempre es el propietario: puede ser un familiar, un conductor o un empleado. |

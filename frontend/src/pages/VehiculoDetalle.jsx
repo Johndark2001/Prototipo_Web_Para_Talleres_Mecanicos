@@ -108,7 +108,7 @@ export default function VehiculoDetalle() {
         className="flex flex-col gap-1 tarjeta p-4"
       >
         <h2 id="titulo-dueno" className="text-xs font-medium uppercase tracking-wide text-texto-suave">
-          Dueño
+          Cliente
         </h2>
         <Link to={`/clientes/${cliente.id}`} className="flex items-center gap-2 font-medium text-primario hover:underline">
           <Icono nombre="cliente" className="size-4" />

@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Para quién | Desarrolladores que mantengan el sistema y evaluadores técnicos |
-| Versión del código | Commit `84f20f3` (28/10/2026), migración de base de datos `0005` |
+| Versión del código | Commit `e51d187` (04/11/2026), migración de base de datos `0007`, más los ajustes visuales del 05/11/2026 (SPEC §21.11) |
 | Documentos de referencia | [SPEC.md](../../SPEC.md), [ADR-001 a ADR-006](../decisions/), [modelo de datos](../modelo-datos.md), [README](../../README.md) |
 
 ---
@@ -68,12 +68,15 @@ La máquina de estados de la orden está en `services/flujo_orden.py` como **reg
 | Validación y configuración | Pydantic + pydantic-settings | ≥ 2.6 | ADR-002 |
 | Tokens | PyJWT | ≥ 2.10 | [ADR-005](../decisions/ADR-005-autenticacion.md) |
 | Hash de claves | argon2-cffi (argon2id) | ≥ 23.1 | ADR-005 |
+| Informe PDF | fpdf2 (Python puro, sin binarios del sistema) | ≥ 2.8 | ADR-002 (ampliado por la decisión O-4, SPEC §21.10) |
 | Base de datos | PostgreSQL | 17 | [ADR-003](../decisions/ADR-003-base-de-datos.md) |
 | Interfaz | React + React Router | 19 / 8 | [ADR-004](../decisions/ADR-004-frontend.md) |
 | Compilación | Vite | 8 | ADR-004 |
 | Estilos | Tailwind CSS | 4 | ADR-004 |
 | Gestor de Python | uv | reciente | — |
 | Calidad | pytest, Ruff, ESLint | — | — |
+
+El frontend sigue con **tres dependencias de ejecución** (`react`, `react-dom`, `react-router`). Íconos, logo, ilustraciones y fondos de los módulos son SVG propios (decisiones V-4 y T-2), sin librerías de íconos ni de imágenes.
 
 ---
 
@@ -99,14 +102,17 @@ La documentación interactiva (OpenAPI) queda en `/api/docs`.
 | | `POST /auth/logout` | Público | Borra la cookie |
 | | `GET /auth/me` | Sesión | Usuario y taller de la sesión |
 | Usuarios | `GET /usuarios`, `POST /usuarios`, `PATCH /usuarios/{id}` | ADMIN | Listar, crear, cambiar nombre, rol o estado |
-| Clientes | `GET /clientes`, `GET /clientes/{id}` | Todos | Listado con búsqueda y detalle con carros |
-| | `POST /clientes`, `PATCH /clientes/{id}` | ADMIN, RECEPCION | Crear, editar, desactivar |
+| Catálogos | `GET /catalogos/categorias-problema` | Sesión | Categorías del problema por tipo de vehículo (O-5) |
+| Clientes | `GET /clientes`, `GET /clientes/{id}` | Todos | Listado con búsqueda y detalle con sus vehículos |
+| | `POST /clientes` | ADMIN, RECEPCION | Crear el cliente y, si llega el objeto `vehiculo`, su primer vehículo en la misma transacción (O-8) |
+| | `PATCH /clientes/{id}` | ADMIN, RECEPCION | Editar, desactivar |
 | | `POST /clientes/{id}/anonimizar` | ADMIN | Anonimización (RN-11) |
-| Vehículos | `GET /vehiculos`, `GET /vehiculos/{id}` | Todos | Búsqueda por placa y detalle |
-| | `POST /vehiculos`, `PATCH /vehiculos/{id}` | ADMIN, RECEPCION | Crear, editar, cambiar dueño, desactivar |
+| Vehículos | `GET /vehiculos`, `GET /vehiculos/{id}` | Todos | Búsqueda por placa, filtro `tipo=CARRO\|MOTO` combinable con `placa`, `activo` y `cliente_id` (V-2), y detalle |
+| | `POST /vehiculos`, `PATCH /vehiculos/{id}` | ADMIN, RECEPCION | Crear (con `tipo`, por defecto `CARRO`), editar, cambiar el cliente, desactivar |
 | Órdenes | `GET /ordenes`, `GET /ordenes/{id}` | Todos (el mecánico solo las suyas) | Listado filtrable y detalle |
-| | `POST /ordenes` | ADMIN, RECEPCION | Abrir orden (recepción) |
-| | `PATCH /ordenes/{id}` | Según campo | Datos de recepción, diagnóstico y trabajo |
+| | `POST /ordenes` | ADMIN, RECEPCION | Abrir orden con `categoria_problema`, `categoria_otro` y `observacion_cliente` (o, en la forma anterior, solo `motivo_ingreso`) (O-5, O-6) |
+| | `PATCH /ordenes/{id}` | Según campo | Datos de recepción (ADMIN, RECEPCION; el mecánico recibe 403), diagnóstico y trabajo |
+| | `GET /ordenes/{id}/informe.pdf` | Quien vea la orden | Informe final; 409 si la orden no está `ENTREGADO` (O-2) |
 | | `POST /ordenes/{id}/historial` | Según transición | Cambio de estado |
 | | `POST /ordenes/{id}/asignaciones` | ADMIN, RECEPCION | Asignar o reasignar mecánico |
 | | `POST /ordenes/{id}/servicios`, `DELETE …/servicios/{linea}` | ADMIN, RECEPCION, mecánico asignado | Mano de obra |
@@ -117,8 +123,9 @@ La documentación interactiva (OpenAPI) queda en `/api/docs`.
 | | `GET /repuestos/{id}/movimientos`, `POST /repuestos/{id}/movimientos` | ADMIN | Movimientos; entradas y ajustes |
 | Dashboard | `GET /dashboard` | ADMIN, RECEPCION | Conteos por estado, entregadas hoy y stock bajo |
 | Seguimiento | `GET /seguimiento/{codigo}` | Público, limitado | Vista pública de la orden |
+| | `GET /seguimiento/{codigo}/informe.pdf` | Público, limitado | Informe final sin datos personales; 409 si no está entregada (O-3) |
 
-En total hay **35 operaciones**. Todas las rutas llevan el prefijo `/api/v1`.
+En total hay **38 operaciones** (35 en la versión `84f20f3`, más el catálogo y los dos informes). Todas las rutas llevan el prefijo `/api/v1`. El conteo sale del OpenAPI que genera la aplicación.
 
 ### 2.3 Convenciones
 
@@ -137,8 +144,10 @@ En total hay **35 operaciones**. Todas las rutas llevan el prefijo `/api/v1`.
 | Carpeta | Contenido |
 |---|---|
 | `src/pages/` | Una pantalla por archivo: `Login`, `Dashboard`, `Ordenes`, `OrdenNueva`, `OrdenDetalle`, `Clientes`, `ClienteDetalle`, `ClienteFormulario`, `Vehiculos`, `VehiculoDetalle`, `VehiculoFormulario`, `Inventario`, `RepuestoDetalle`, `RepuestoFormulario`, `Usuarios`, `Seguimiento`, `NoEncontrada` |
-| `src/components/` | Componentes reutilizables: `Boton`, `CampoFormulario`, `Aviso`, `DialogoConfirmacion`, `DialogoNota`, `ChipEstado`, `EstadoVacio`, `Esqueleto`, `EtiquetaStock`, `BuscadorPlaca`, `Layout`, `AnonimizarCliente`… |
-| `src/components/orden/` | Paneles del detalle de la orden: `AccionesEstado`, `PanelMecanico`, `PanelRecepcion`, `PanelTrabajo`, `PanelLiquidacion`, `LineaTiempo`, `HistorialOrden`, `EnlaceSeguimiento`, selectores |
+| `src/components/` | Componentes reutilizables: `Boton`, `CampoFormulario`, `Aviso`, `DialogoConfirmacion`, `DialogoNota`, `ChipEstado`, `EstadoVacio`, `Esqueleto`, `EtiquetaStock`, `BuscadorPlaca`, `Layout`, `AnonimizarCliente`, `CamposVehiculo` (tipo, placa, marca, modelo, año y color; lo usan el formulario del vehículo y el alta del cliente), `FiltroTipoVehiculo` (Todos, Carros, Motos), `EtiquetaTipo`, `SelectorCliente`, `Icono`, `Logo`, `IlustracionTaller`, `FondoModulo`… |
+| `src/components/orden/` | Paneles del detalle de la orden: `AccionesEstado`, `PanelMecanico`, `PanelRecepcion`, `PanelTrabajo`, `PanelLiquidacion`, `LineaTiempo`, `HistorialOrden`, `EnlaceSeguimiento`, `CamposProblema` (buscador de categorías y observación), selectores |
+| `src/assets/fondos/` | Seis escenas SVG de fondo, una por módulo (T-2) |
+| `src/problema.js` | Búsqueda de categorías sin tildes ni mayúsculas y composición «categoría — observación» (O-6, O-7) |
 | `src/sesion/` | `ProveedorSesion` (contexto con el usuario y el taller) y `RutaProtegida` (redirige al login o bloquea por rol) |
 | `src/hooks/` | `useConsulta` (GET con estados de carga y error), `useRetrasado` (espera breve antes de buscar), `useAvisoNavegacion` |
 | `src/api/cliente.js` | **Único punto de acceso a la API**: `fetch` con `credentials: 'same-origin'`, JSON obligatorio y traducción de errores a `ErrorApi` |
@@ -151,6 +160,9 @@ En total hay **35 operaciones**. Todas las rutas llevan el prefijo `/api/v1`.
 - **El servidor decide qué acciones se pueden hacer.** El detalle de la orden trae `transiciones`, `puede_asignar`, `puede_editar_trabajo` y `puede_editar_recepcion`, y la interfaz solo muestra esos botones. Así las reglas no se duplican en el navegador.
 - **Accesibilidad** (RNF-07): etiquetas en todos los campos, `aria-live` en búsquedas, enlace «Saltar al contenido», diálogos con `<dialog>` nativo y estados con texto e ícono, no solo con color.
 - **Sin librerías extra** para formularios ni para solicitudes HTTP (ADR-004).
+- **Vista de la orden en una columna** (O-1): encabezado, estado, acciones (con el informe PDF), información general, diagnóstico, trabajo realizado, costos, enlace e historial. Diagnóstico y trabajo comparten un solo borrador: «Guardar» en cualquiera envía los dos.
+- **Terminología** (T-1): la interfaz dice «Cliente», no «Dueño», para la persona registrada con el vehículo. El API y la base no cambian (`cliente_id`).
+- **Fondos por módulo** (T-2, T-3): `FondoModulo` elige la escena por el prefijo de la ruta y la pinta en una capa fija detrás del contenido (`-z-10` dentro de un contenedor `isolate`), con opacidad 0,5, máscara de degradado y fundido de 500 ms al cambiar de módulo. Es `aria-hidden` y no recibe clics.
 - En desarrollo, Vite reenvía `/api` a `http://localhost:8000`, así que la interfaz y la API comparten origen igual que en producción y la cookie funciona sin CORS.
 
 ---
@@ -159,7 +171,7 @@ En total hay **35 operaciones**. Todas las rutas llevan el prefijo `/api/v1`.
 
 ### 4.1 Modelo
 
-Son **12 tablas** (más `alembic_version`). Las *tablas raíz* llevan `taller_id`; las *tablas hijas* heredan el taller de su tabla padre.
+Son **12 tablas** (más `alembic_version`) y cuatro tipos enumerados (`rol_usuario`, `estado_orden`, `tipo_movimiento` y `tipo_vehiculo`). Las *tablas raíz* llevan `taller_id`; las *tablas hijas* heredan el taller de su tabla padre. Las migraciones 0006 y 0007 agregaron columnas, no tablas.
 
 ```mermaid
 erDiagram
@@ -169,8 +181,8 @@ erDiagram
     TALLER ||--o{ ORDEN_TRABAJO : gestiona
     TALLER ||--o{ REPUESTO : almacena
     TALLER ||--o{ SERVICIO : ofrece
-    CLIENTE ||--o{ VEHICULO : "dueño actual"
-    CLIENTE ||--o{ ORDEN_TRABAJO : "dueño al momento"
+    CLIENTE ||--o{ VEHICULO : "cliente actual"
+    CLIENTE ||--o{ ORDEN_TRABAJO : "cliente al momento"
     VEHICULO ||--o{ ORDEN_TRABAJO : recibe
     USUARIO |o--o{ ORDEN_TRABAJO : "mecánico asignado"
     USUARIO |o--o{ CLIENTE : anonimiza
@@ -199,6 +211,8 @@ El detalle de cada atributo está en [docs/modelo-datos.md](../modelo-datos.md) 
 | Motivo al cancelar (RN-18) | `CHECK (estado <> 'CANCELADA' OR motivo_cancelacion IS NOT NULL)` |
 | Fecha de entrega al entregar | `CHECK (estado <> 'ENTREGADO' OR fecha_entrega IS NOT NULL)` |
 | Anonimización coherente y auditada (RN-11, A-7) | `CHECK ck_cliente_anonimizacion_coherente` |
+| El detalle de «Otro» solo existe con la categoría «Otro» (O-5) | `CHECK ck_orden_trabajo_categoria_otro_solo_con_otro` |
+| Todo vehículo es carro o moto (V-1) | Columna `vehiculo.tipo` de tipo `tipo_vehiculo`, `NOT NULL`, por defecto `CARRO` |
 | La historia no se borra (RN-11) | Todas las FK con `ON DELETE RESTRICT` |
 | Montos exactos (RN-19) | `NUMERIC(12,2)` para dinero, `NUMERIC(10,2)` para cantidades |
 
@@ -243,6 +257,8 @@ Las pruebas corren contra PostgreSQL real, **nunca contra SQLite**, para probar 
 | `0003_orden_historial_asignacion` | 25/10/2026 | `orden_trabajo`, `historial_estado_orden`, `asignacion_orden`, tipo `estado_orden`, índice de orden abierta |
 | `0004_inventario_y_lineas_orden` | 26/10/2026 | `servicio`, `repuesto`, `orden_servicio`, `orden_repuesto`, `movimiento_inventario`, tipo `tipo_movimiento` |
 | `0005_auditoria_anonimizacion` | 28/10/2026 | `cliente.anonimizado_en`, `cliente.anonimizado_por` y el CHECK de coherencia |
+| `0006_tipo_vehiculo` | 04/11/2026 | Tipo `tipo_vehiculo` (`CARRO`, `MOTO`) y columna `vehiculo.tipo`; los vehículos existentes quedan como `CARRO` (V-1) |
+| `0007_categoria_problema` | 04/11/2026 | `orden_trabajo.categoria_problema` (varchar 80), `categoria_otro` (varchar 120), `observacion_cliente` (text) y el CHECK de «Otro». Copia `motivo_ingreso` a `observacion_cliente` en las órdenes anteriores, que quedan sin categoría (O-6) |
 
 **Comandos** (en `backend/`):
 
@@ -287,24 +303,29 @@ mi-prototipo/
 ├── docs/
 │   ├── decisions/                  ADR-001 … ADR-006
 │   ├── modelo-datos.md / .dbml     Modelo entidad-relación
+│   ├── historial-commits.md        Hitos del desarrollo
+│   ├── guia-skills-diseno.md       Guía de las skills de diseño usadas en el rediseño
 │   └── sustentacion/               Esta documentación
 ├── backend/
 │   ├── pyproject.toml, uv.lock     Dependencias (uv)
-│   ├── alembic.ini, alembic/       Migraciones 0001–0005
+│   ├── alembic.ini, alembic/       Migraciones 0001–0007
 │   ├── app/
 │   │   ├── main.py                 Creación de la app, middleware, frontend estático
 │   │   ├── api/                    Rutas: auth, usuarios, clientes, vehiculos, ordenes,
-│   │   │                           mecanicos, repuestos, dashboard, seguimiento, salud, deps
+│   │   │                           mecanicos, repuestos, dashboard, seguimiento, catalogos,
+│   │   │                           salud, deps
 │   │   ├── schemas/                Contratos Pydantic de entrada y salida
 │   │   ├── services/               Reglas de negocio (flujo_orden, ordenes, inventario,
-│   │   │                           lineas_orden, liquidacion, seguimiento, clientes…)
+│   │   │                           lineas_orden, liquidacion, seguimiento, clientes,
+│   │   │                           vehiculos, categorias, informe_pdf…)
 │   │   ├── models/                 Tablas SQLAlchemy
 │   │   ├── core/                   config, db, seguridad, errores, limites
 │   │   └── scripts/                crear_taller, semilla_demo
-│   └── tests/                      13 archivos, 214 pruebas pytest
+│   └── tests/                      16 archivos, 263 pruebas pytest
 ├── frontend/
 │   ├── package.json, vite.config.js, eslint.config.js
-│   └── src/                        pages/, components/, sesion/, hooks/, api/
+│   └── src/                        pages/, components/, components/orden/, assets/fondos/,
+│                                   sesion/, hooks/, api/
 └── investigacion_completa.md, entrevistas_e_instrumentos.md, resumen_requerimientos.md
                                     Documentos de la tesis (D1, D2, D3)
 ```
@@ -500,6 +521,8 @@ sequenceDiagram
     end
 ```
 
+**Informe PDF público** (`GET /seguimiento/{codigo}/informe.pdf`, O-3): usa el mismo limitador y la misma validación del código. Solo existe si la orden está `ENTREGADO`. Omite el nombre y el teléfono del cliente y el kilometraje, y enmascara la placa. Como excepción aprobada por el autor, sí incluye la categoría, la observación, el diagnóstico y el trabajo realizado, que el JSON de seguimiento no expone (sección 13).
+
 **Limitaciones conocidas:**
 - El límite está **en memoria**: sirve con una sola instancia, que es el caso del plan gratuito. Con varias instancias habría que llevar el contador a un almacén compartido.
 - Detrás del proxy del hosting, `request.client.host` sería la IP del proxy. **Ajustarlo es tarea de la Semana 5** (S4-8).
@@ -507,26 +530,101 @@ sequenceDiagram
 
 ---
 
-## 13. Pruebas automatizadas
+## 13. Informe PDF final (decisiones O-2 a O-4)
 
-| Archivo | Pruebas | Qué cubre |
+- **Dónde:** `services/informe_pdf.py`, con **fpdf2**. Se eligió generarlo en el servidor, y no en el navegador, para que la regla «solo `ENTREGADO`» la valide el backend y quede cubierta por pytest.
+- **Regla:** `generar()` lanza `Conflicto` (409, «El informe PDF solo está disponible cuando la orden fue entregada») si la orden no está `ENTREGADO`, incluida `CANCELADA`.
+- **Dos variantes con el mismo código:**
+
+| Dato | Interno (`publico=False`) | Público (`publico=True`) |
 |---|---|---|
-| `test_auth.py` | 13 | Login, cookie, mensaje genérico, argon2id, token alterado, desactivación inmediata, 415 sin JSON, formato de error |
-| `test_usuarios.py` | 10 | Alta, correo duplicado, clave corta, solo ADMIN, aislamiento, no quitarse el propio acceso |
-| `test_clientes.py` | 17 | RN-10 (API y CHECK), normalización, documento único, búsqueda, permisos, aislamiento |
-| `test_vehiculos.py` | 16 | RN-20, placa única, cambio de dueño, S2-4, aislamiento |
-| `test_flujo_orden.py` | 9 | Máquina de estados pura, H-1, RN-07, RN-18 |
-| `test_ordenes.py` | 30 | RF-05 a RF-07, RF-11, RN-08, RN-12, RN-13, RN-16, RN-17, RN-18, Mis órdenes, aislamiento |
-| `test_concurrencia_ordenes.py` | 2 | Consecutivo y orden abierta única con recepciones simultáneas |
-| `test_inventario.py` | 19 | RF-08, RF-10, entradas, ajustes, RN-02, RN-04 |
-| `test_concurrencia_stock.py` | 1 | Stock nunca negativo con registros simultáneos |
-| `test_liquidacion.py` | 19 | RF-09, RF-12, RN-03, RN-05, RN-06, RN-07, RN-15 |
-| `test_dashboard.py` | 4 | Conteos, alertas, aislamiento, rol |
-| `test_seguimiento.py` | 5 | Acceso sin sesión, sin datos personales, código inválido, límite |
-| `test_anonimizacion.py` | 15 | RN-11: datos borrados, auditoría, conservación, permisos, confirmación, A-1, A-4, CHECK |
-| **Total** | **180 funciones → 214 casos** (algunas pruebas son parametrizadas) | |
+| Taller, número, fechas de ingreso y entrega | Sí | Sí |
+| Nombre y teléfono del cliente | Sí | No («Datos personales protegidos (Ley 1581 de 2012)») |
+| Placa | Completa | Enmascarada (`ABC***`) |
+| Tipo, marca, modelo y color | Sí | Sí |
+| Kilometraje | Sí | No |
+| Categoría, observación, diagnóstico y trabajo | Sí | Sí (excepción O-3) |
+| Mano de obra, repuestos y total | Sí | Sí |
+| Historial de estados | Sin notas internas ni nombres de usuarios | Igual |
+
+- **Permisos del interno:** cualquier usuario que pueda ver la orden; el mecánico solo las suyas (otro mecánico recibe 404, como cualquier recurso ajeno; sin sesión, 401).
+- **Fuente:** Helvetica, la fuente base del formato PDF (Latin-1). Los caracteres que no caben (emoji, comillas tipográficas) se reemplazan, y la prueba `test_textos_fuera_de_latin1_no_rompen_el_pdf` lo verifica.
+- **Formato:** carta; pesos con punto de miles; fechas en hora de Colombia (UTC−5). El archivo se llama `informe-orden-{numero}.pdf`.
+
+## 14. Categoría del problema (decisiones O-5 a O-7)
+
+- **Catálogo fijo en código:** `services/categorias.py` define **22 categorías para carro y 20 para moto**; cada lista termina en «Otro». Se sirve en `GET /catalogos/categorias-problema`.
+- **Se guarda el nombre**, no un código: si el catálogo cambia, las órdenes y sus PDF no cambian.
+- **Validación en el servidor:** la categoría debe ser del tipo del vehículo; «Otro» exige `categoria_otro`, y el CHECK de la base impide `categoria_otro` con otra categoría. El mecánico recibe 403 si intenta registrar o corregir el problema.
+- **Compatibilidad (O-6):** `motivo_ingreso` sigue siendo `NOT NULL` y se compone como «categoría — observación». El API acepta todavía solo `motivo_ingreso` (forma anterior); sin categoría ni motivo responde 422.
+- **Búsqueda (O-7):** en el navegador (`src/problema.js`) se normalizan tildes y mayúsculas; Enter elige la primera coincidencia; la lista cambia con el tipo del vehículo.
+
+## 15. Alta de cliente con vehículo (decisiones O-8 y O-9)
+
+- `POST /clientes` acepta un objeto `vehiculo` opcional. `services/clientes.crear()` arma el cliente y, si llega el vehículo, lo crea con `services/vehiculos.py` asociado al mismo objeto `Cliente`; los dos se guardan con **un solo commit**. Si la placa existe (violación de `uq_vehiculo_taller_placa`) o un dato falla, se revierte todo y el error llega con el campo `vehiculo.<campo>`.
+- La respuesta es el detalle del cliente con sus vehículos; amplía la respuesta anterior sin quitar campos.
+- La interfaz usa el mismo componente `CamposVehiculo` en el alta del cliente y en el formulario del vehículo, así que las validaciones y los textos son iguales en los dos lugares.
+
+## 16. Interfaz: rediseño, tipo de vehículo y fondos (decisiones V-1 a V-5 y T-1 a T-3)
+
+- **Tipo de vehículo:** `FiltroTipoVehiculo` envía `tipo` al API; el filtro se combina con la búsqueda por placa y con «Incluir inactivos». `EtiquetaTipo` muestra ícono y texto (RNF-07).
+- **Rediseño (V-4):** logo, inicio de sesión ilustrado, navegación lateral oscura, botones con estados de foco, presión y carga, y tokens de color en `src/index.css` (`@theme` de Tailwind 4). Las animaciones duran entre 150 y 500 ms y se apagan con «reducir movimiento».
+- **Fondos (T-2, T-3):** seis SVG de línea en `src/assets/fondos/`, de menos de 2,5 KB cada uno. Vite los incrusta en el código, así que no generan solicitudes extra. Comparten trazo, la tinta `#115e59` y el mismo dibujo del carro de `IlustracionTaller`.
+- **Limitación conocida de los fondos:** con opacidad 0,5, un texto gris (`texto-suave`) que quede justo sobre una línea de la escena baja a un contraste de ~3:1, por debajo del 4,5:1 de RNF-07. Las tarjetas, listas y formularios son opacos y no se ven afectados; la máscara deja limpias las zonas de títulos. Ver SPEC §21.11.
+
+---
+
+## 17. Pruebas automatizadas
+
+| Archivo | Funciones | Casos | Qué cubre |
+|---|---|---|---|
+| `test_auth.py` | 13 | 13 | Login, cookie, mensaje genérico, argon2id, token alterado, desactivación inmediata, 415 sin JSON, formato de error |
+| `test_usuarios.py` | 10 | 12 | Alta, correo duplicado, clave corta, solo ADMIN, aislamiento, no quitarse el propio acceso |
+| `test_clientes.py` | 17 | 21 | RN-10 (API y CHECK), normalización, documento único, búsqueda, permisos, aislamiento |
+| `test_cliente_con_vehiculo.py` | 6 | 6 | O-8: alta conjunta, sin vehículo, placa repetida sin guardar nada, error con su campo, permisos, más vehículos desde la ficha |
+| `test_vehiculos.py` | 24 | 35 | RN-20, placa única, cambio de cliente, S2-4, aislamiento; V-1 y V-2: tipo por defecto, moto, tipo inválido, no vaciarlo, filtro combinado y aislado |
+| `test_flujo_orden.py` | 9 | 22 | Máquina de estados pura, H-1, RN-07, RN-18 |
+| `test_ordenes.py` | 30 | 36 | RF-05 a RF-07, RF-11, RN-08, RN-12, RN-13, RN-16, RN-17, RN-18, Mis órdenes, aislamiento |
+| `test_categoria_problema.py` | 14 | 17 | O-5 a O-7: catálogo por tipo, búsqueda sin tildes, «Otro», forma anterior, corrección, órdenes antiguas, 403 del mecánico |
+| `test_concurrencia_ordenes.py` | 2 | 2 | Consecutivo y orden abierta única con recepciones simultáneas |
+| `test_inventario.py` | 19 | 26 | RF-08, RF-10, entradas, ajustes, RN-02, RN-04 |
+| `test_concurrencia_stock.py` | 1 | 1 | Stock nunca negativo con registros simultáneos |
+| `test_liquidacion.py` | 19 | 24 | RF-09, RF-12, RN-03, RN-05, RN-06, RN-07, RN-15 |
+| `test_informe_pdf.py` | 12 | 16 | O-2 a O-4: informe interno y público, permisos, 409 antes de entregar y en canceladas, sin datos personales, cliente anonimizado, órdenes antiguas, Latin-1, formato de pesos |
+| `test_dashboard.py` | 4 | 4 | Conteos, alertas, aislamiento, rol |
+| `test_seguimiento.py` | 5 | 8 | Acceso sin sesión, sin datos personales, código inválido, límite |
+| `test_anonimizacion.py` | 15 | 20 | RN-11: datos borrados, auditoría, conservación, permisos, confirmación, A-1, A-4, CHECK |
+| **Total** | **200** | **263** | Algunas pruebas son parametrizadas |
 
 ```
 cd backend
-uv run pytest          # 214 passed (≈ 100 s en el equipo de desarrollo)
+uv run pytest          # 263 passed (≈ 110 s en el equipo de desarrollo)
 ```
+
+**Cobertura del backend** (medida el 05/11/2026 con `pytest-cov` en un entorno temporal, sin agregarlo a las dependencias):
+
+```
+uv run --with pytest-cov pytest --cov=app
+```
+
+| Alcance | Sentencias | Cobertura |
+|---|---|---|
+| Todo `app/` | 2.144 | **91 %** |
+| `app/` sin los scripts de consola (`crear_taller`, `semilla_demo`, que no tienen pruebas) | 2.001 | **97 %** |
+| `services/informe_pdf.py`, `services/categorias.py`, `services/flujo_orden.py`, `services/liquidacion.py` | — | 100 % |
+
+El frontend **no tiene pruebas automatizadas** (SPEC §15): se verifica con la lista manual por pantalla, `npm run lint` y `npm run build`.
+
+---
+
+## 18. Cambios desde la versión documentada anterior (`84f20f3`, 28/10/2026)
+
+| Commit | Fecha | Cambio | Migración | Pruebas |
+|---|---|---|---|---|
+| `e4a164a` | 28/10/2026 | Documentación de sustentación | — | 214 |
+| `e4692f8` | 28/10/2026 | Historial de commits | — | 214 |
+| `2faf3c0` | 03/11/2026 | Skills de diseño y su guía (solo documentación y herramientas) | — | 214 |
+| `e3fc487` | 04/11/2026 | Rediseño visual y tipo de vehículo CARRO/MOTO (V-1 a V-5) | 0006 | 224 |
+| `e51d187` | 04/11/2026 | Vista vertical de la orden, informe PDF con fpdf2, categoría del problema y observación, alta de cliente con vehículo (O-1 a O-9) | 0007 | 263 |
+| `464e261` | 04/11/2026 | Registro de la aprobación de O-1 a O-9 | — | 263 |
+| Sin commit | 05/11/2026 | Terminología «Cliente» en lugar de «Dueño» (T-1) y fondos temáticos por módulo (T-2, T-3) | — | 263 |

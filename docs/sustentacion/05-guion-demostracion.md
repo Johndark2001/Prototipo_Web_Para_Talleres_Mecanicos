@@ -3,11 +3,11 @@
 | Campo | Valor |
 |---|---|
 | Para quién | El autor, durante la sustentación |
-| Duración | 13 a 14 minutos, más 1 minuto de reserva |
-| Versión | Commit `84f20f3`, en local (el despliegue está pendiente) |
+| Duración | 14 minutos, más 1 minuto de reserva |
+| Versión | Commit `e51d187` más los ajustes visuales del 05/11/2026, en local (el despliegue está pendiente) |
 | Datos | Solo ficticios, de `semilla_demo` (decisión H-5) |
 
-La historia de la demostración es **un solo carro que entra al taller, se repara, se entrega y, después, su dueña pide borrar sus datos**. Así el jurado ve el flujo completo de punta a punta, sin saltos.
+La historia de la demostración es **un solo carro que entra al taller, se repara, se entrega con su informe PDF y, después, la clienta pide borrar sus datos**. Así el jurado ve el flujo completo de punta a punta, sin saltos.
 
 ---
 
@@ -57,14 +57,16 @@ Deje las ventanas A, B y C **en la pantalla de login**, para mostrar el inicio d
 | Dato | Valor |
 |---|---|
 | Cliente nuevo | Marta Ríos (demo) — teléfono 310 444 5566 — sin documento |
-| Carro nuevo | Placa escrita «dem-432» → el sistema la guarda como **DEM432** — Renault Sandero 2017, gris |
-| Orden | Motivo «Cambio de aceite y revisión de frenos», 65400 km, mecánico «Mecánico Norte» |
+| Carro nuevo (en el mismo formulario del cliente) | Tipo **Carro** — placa escrita «dem-432» → el sistema la guarda como **DEM432** — Renault Sandero 2017, gris |
+| Orden | Categoría **Problemas de frenos** (se busca escribiendo «fren») — observación «La clienta pide cambio de aceite y dice que los frenos chillan» — 65400 km — mecánico «Mecánico Norte» |
+| Moto de la semilla (para el filtro) | JKL45D, Yamaha FZ 2.0 2019 |
 | Repuestos (catálogo de la semilla) | Pastillas de freno delanteras (stock 0, **agotado**), Aceite 20W-50 (20 litros), Filtro Mann W712 (2 unidades, **bajo el mínimo de 3**) |
 | Cliente con orden abierta (para el bloqueo) | Pedro Ruiz (demo), placa XYZ987 |
 
 ### 1.5 Plan B
 
-- Si algo falla, la semilla ya trae órdenes en todos los estados: XYZ987 entregada, ABC123 en diagnóstico, JKL45D esperando repuestos y XYZ987 recibida sin mecánico.
+- Si algo falla, la semilla ya trae órdenes en todos los estados: XYZ987 entregada (sirve para mostrar el **informe PDF**), ABC123 en diagnóstico, JKL45D esperando repuestos y XYZ987 recibida sin mecánico.
+- Las órdenes de la semilla se crearon con el motivo libre, así que aparecen **«Sin categoría (orden registrada antes del catálogo)»**. Si el jurado pregunta, es la compatibilidad de la decisión O-6; las abiertas se pueden corregir con **Corregir datos de recepción**.
 - Tenga capturas de pantalla de cada paso en una carpeta, por si falla el equipo.
 - No improvise datos reales: solo los de esta tabla.
 
@@ -96,44 +98,45 @@ Formato: **⏱ tiempo acumulado** · **Hacer** (acciones exactas) · **Decir** (
 
 ---
 
-### Paso 2 — Cliente · ⏱ 1:30 a 3:00
+### Paso 2 — Cliente con su vehículo · ⏱ 1:30 a 3:15
 
 **Hacer:**
 1. Menú **Clientes** → **+ Cliente**.
 2. Nombre: `Marta Ríos (demo)`. Teléfono: `310 444 5566`. Deje vacíos el correo y el documento.
-3. **Sin marcar la autorización**, toque **Guardar cliente**. Señale el error en la casilla.
-4. Marque **«El cliente autoriza el tratamiento de sus datos personales (Ley 1581 de 2012)»** y toque **Guardar cliente**.
-5. En el detalle, señale el teléfono sin espacios y «Autorizó el [fecha de hoy]».
+3. En **Información del vehículo**: tipo **Carro**; placa: escriba `dem-432` y pase al campo siguiente. Señale cómo se corrige sola a **DEM432**. Marca `Renault`, Modelo `Sandero`, Año `2017`, Color `Gris`.
+4. **Sin marcar la autorización**, toque **Guardar cliente**. Señale el error en la casilla.
+5. Marque **«El cliente autoriza el tratamiento de sus datos personales (Ley 1581 de 2012)»** y toque **Guardar cliente**.
+6. Señale «Cliente Marta Ríos (demo) registrado con el vehículo DEM432», el teléfono sin espacios, «Autorizó el [fecha de hoy]» y el carro en **Vehículos asociados**.
 
 **Decir:**
-> «Por la Ley 1581, el sistema no deja registrar a un cliente sin su autorización. Esa regla no está solo en la pantalla: también está en la base de datos con una restricción, así que no hay forma de saltársela. Además pedimos solo lo necesario: nombre y teléfono; el correo y el documento son opcionales. La fecha de la autorización la pone el servidor.»
+> «Registramos a la clienta y su carro en un solo formulario: se guardan juntos o no se guarda ninguno, así nunca queda un cliente a medias. Por la Ley 1581, el sistema no deja registrar a un cliente sin su autorización; esa regla también está en la base de datos con una restricción. Pedimos solo lo necesario: nombre y teléfono. La placa se normaliza, mayúsculas y sin guiones, y es única dentro del taller. Decimos "cliente" y no "dueño" porque quien trae el carro no siempre es el propietario.»
 
 ---
 
-### Paso 3 — Vehículo · ⏱ 3:00 a 4:00
+### Paso 3 — Vehículos: carros y motos · ⏱ 3:15 a 3:45
 
 **Hacer:**
-1. En el detalle de Marta, toque **+ Carro**. El dueño ya está elegido.
-2. Placa: escriba `dem-432` y pase al campo siguiente. Señale cómo se corrige sola a **DEM432**.
-3. Marca `Renault`, Modelo `Sandero`, Año `2017`, Color `Gris`. **Guardar carro**.
-4. Señale el detalle «Carro de placa DEM432», el dueño y el historial vacío.
+1. Menú **Vehículos**. Señale el fondo del módulo y, en cada fila, **Cliente: [nombre]** y la etiqueta Carro o Moto.
+2. Toque **Motos**: queda la Yamaha **JKL45D**. Escriba `JKL` en la búsqueda: el filtro se combina con la placa.
+3. Toque **Todos** para volver.
 
 **Decir:**
-> «La placa se normaliza: mayúsculas, sin espacios ni guiones. Así no hay dos registros del mismo carro escritos distinto. La placa es única dentro del taller, pero otro taller puede tener la misma: cada taller tiene sus datos separados. Aquí se irá llenando el historial de mantenimiento del carro.»
+> «El sistema maneja carros y motos. El filtro por tipo se combina con la búsqueda por placa y con los inactivos, y el tipo se muestra con ícono y texto, no solo con color.»
 
 ---
 
-### Paso 4 — Orden · ⏱ 4:00 a 5:15
+### Paso 4 — Orden · ⏱ 3:45 a 5:15
 
 **Hacer:**
-1. En el carro, toque **Nueva orden para este carro**. Señale que el carro ya viene elegido.
-2. Motivo de ingreso: `Cambio de aceite y revisión de frenos`. Kilometraje: `65400`. Entrega estimada: mañana.
-3. Mecánico: elija **Mecánico Norte**. Señale que la lista muestra cuántas órdenes abiertas tiene.
-4. **Abrir orden**. Señale «Orden #5 abierta para DEM432», el estado **Recibido** y el historial «Abrió la orden · Recepción Norte».
-5. En **Enlace para el cliente**, toque **Copiar enlace** y ábralo en la ventana D. Déjelo visible.
+1. Abra **DEM432** (desde la ficha de Marta o con **Buscar placa**) y toque **Nueva orden para este carro**. Señale que el carro ya viene elegido.
+2. En **Categoría del problema**, escriba `fren` (sin tilde): aparece **Problemas de frenos**. Presione Enter.
+3. **Observación reportada por el cliente**: `La clienta pide cambio de aceite y dice que los frenos chillan`. Kilometraje: `65400`. Entrega estimada: mañana.
+4. Mecánico: elija **Mecánico Norte**. Señale que la lista muestra cuántas órdenes abiertas tiene.
+5. **Abrir orden**. Señale «Orden #5 abierta para DEM432», el estado **Recibido**, la categoría en **Información general** y el historial «Abrió la orden · Recepción Norte».
+6. En **Enlace de seguimiento**, toque **Copiar enlace** y ábralo en la ventana D. Déjelo visible.
 
 **Decir:**
-> «Recibir un carro ya registrado toma tres pasos: buscarlo, escribir el motivo y abrir la orden. El número es consecutivo por taller y lo asigna el servidor con un bloqueo, así dos recepcionistas no pueden sacar el mismo número. Un carro solo puede tener una orden abierta. Este enlace es lo que le mandamos a la clienta por WhatsApp: contiene un código aleatorio de 128 bits, imposible de adivinar.»
+> «Recibir un carro ya registrado toma tres pasos: elegirlo, escoger la categoría del problema y abrir la orden. La categoría sale de un catálogo distinto para carros y para motos; así, con los datos del piloto, podremos saber qué problemas son los más frecuentes. Lo que dice la clienta queda con sus palabras. El número es consecutivo por taller y lo asigna el servidor con un bloqueo. Un carro solo puede tener una orden abierta. Este enlace es lo que le mandamos a la clienta por WhatsApp: contiene un código aleatorio de 128 bits, imposible de adivinar.»
 
 ---
 
@@ -142,11 +145,11 @@ Formato: **⏱ tiempo acumulado** · **Hacer** (acciones exactas) · **Decir** (
 **Hacer:**
 1. Pase a la ventana B (vista de celular). Ingrese como `mecanico@norte.demo.co`.
 2. Señale el menú inferior y «Mis órdenes abiertas»: aparece la #5 de DEM432.
-3. Abra la orden. Toque **Iniciar diagnóstico**.
-4. En **Diagnóstico**, escriba `Pastillas delanteras gastadas al 90 %. Aceite vencido.` y toque **Guardar**.
+3. Abra la orden. Señale que se lee de arriba abajo: estado, acciones, información general (con la categoría y la observación), diagnóstico, trabajo realizado y costos. Toque **Iniciar diagnóstico**.
+4. En la sección **Diagnóstico**, escriba `Pastillas delanteras gastadas al 90 %. Aceite vencido.` y toque **Guardar**.
 
 **Decir:**
-> «Así lo ve el mecánico, en su celular. Solo ve las órdenes que le asignaron; si se la reasignan a otro, deja de verla. Solo él o el administrador pueden iniciar el diagnóstico, y el sistema exige que haya un mecánico asignado. Todo cambio queda con su nombre, la fecha y la hora.»
+> «Así lo ve el mecánico, en su celular. La orden está en una sola columna, en el orden en que se trabaja. Solo ve las órdenes que le asignaron; si se la reasignan a otro, deja de verla. Puede leer la categoría y lo que dijo la clienta, pero no cambiarlos: eso es de recepción. Solo él o el administrador pueden iniciar el diagnóstico, y el sistema exige que haya un mecánico asignado. Todo cambio queda con su nombre, la fecha y la hora.»
 
 ---
 
@@ -183,40 +186,42 @@ Formato: **⏱ tiempo acumulado** · **Hacer** (acciones exactas) · **Decir** (
 3. **+ Repuesto** → `W712` → **Filtro de aceite Mann W712**, cantidad `5` → **Agregar repuesto**. Señale el error **«No hay suficiente Filtro de aceite Mann W712: quedan 2…»**.
 4. Cambie la cantidad a `1` → **Agregar repuesto**.
 5. **+ Mano de obra**: `Cambio de pastillas y aceite`, Valor `60.000` → **Agregar**.
-6. En **Trabajo realizado**, escriba `Cambio de pastillas delanteras, aceite y filtro.` Toque **Marcar reparado**.
+6. En la sección **Trabajo realizado**, escriba `Cambio de pastillas delanteras, aceite y filtro.` Toque **Marcar reparado**.
 
 **Decir:**
 > «Al agregar un repuesto, el sistema lo descuenta del inventario en la misma operación. Si pido más de lo que hay, lo rechaza y me dice cuánto queda: el stock nunca queda negativo. Lo probamos incluso con dos personas registrando al mismo tiempo. El precio se copia en la orden: si mañana cambia en el catálogo, esta orden no cambia. Para marcar el carro como reparado, el mecánico tiene que escribir qué hizo; sin eso, el sistema no lo deja.»
 
 ---
 
-### Paso 9 — Liquidación · ⏱ 10:00 a 11:00
+### Paso 9 — Liquidación, entrega e informe PDF · ⏱ 10:00 a 11:15
 
 **Hacer:**
-1. En A (recepción), recargue la orden #5. Señale **Mano de obra, repuestos y total**:
+1. En A (recepción), recargue la orden #5. Señale que en **Acciones** todavía no hay informe. En **Costos**, señale **Mano de obra, repuestos y total**:
    - Mano de obra: **$60.000**
    - Repuestos: pastillas $85.000 + aceite 4 × $32.000 = $128.000 + filtro $25.000 = **$238.000**
    - Total: **$298.000** — «Valores sin IVA.»
 2. Toque **Entregar** → confirme **¿Entregar el carro DEM432?** → **Entregar**.
 3. Señale el estado **Entregado**, la fecha de entrega y que ya no hay botones para modificar.
+4. En **Acciones**, toque **Descargar informe PDF**. Abra `informe-orden-5.pdf` y recórralo: cliente, vehículo, categoría, observación, diagnóstico, trabajo, repuestos, total e historial sin nombres de empleados.
 
 **Decir:**
-> «El total no lo escribe nadie: lo calcula el servidor sumando cantidad por precio, con decimales exactos, nunca con números de coma flotante. Es sin IVA porque la facturación electrónica de la DIAN está fuera del alcance. Al entregar, la orden se cierra y ya no se puede modificar: así el historial es confiable.»
+> «El total no lo escribe nadie: lo calcula el servidor sumando cantidad por precio, con decimales exactos. Es sin IVA porque la facturación electrónica de la DIAN está fuera del alcance. Al entregar, la orden se cierra y ya no se puede modificar. Solo entonces aparece el informe final en PDF: lo genera el servidor, que es quien verifica que la orden esté entregada, y esa regla tiene pruebas automatizadas. No es una factura: es la constancia del servicio para la clienta.»
 
 ---
 
-### Paso 10 — Seguimiento público · ⏱ 11:00 a 11:45
+### Paso 10 — Seguimiento público · ⏱ 11:15 a 12:00
 
 **Hacer:**
-1. En D, toque **Actualizar**. Señale «Su carro ya fue entregado. Gracias por su confianza.», la línea de tiempo completa y el cobro.
-2. Señale la placa **DEM\*\*\***, y que no aparecen el nombre, el teléfono, el kilometraje ni el motivo.
+1. En D, toque **Actualizar**. Señale «Su carro ya fue entregado. Gracias por su confianza.», la línea de tiempo completa, el cobro y el botón **Descargar informe PDF**.
+2. Señale la placa **DEM\*\*\***, y que no aparecen el nombre, el teléfono, el kilometraje ni la observación.
+3. Descargue el PDF y señale «Datos personales protegidos (Ley 1581 de 2012)» y la placa enmascarada.
 
 **Decir:**
-> «Esto es lo que ve la clienta, sin crear una cuenta. La placa va enmascarada y no hay ningún dato personal, ni notas internas, ni nombres de empleados. El servidor solo envía una lista cerrada de campos, y tenemos una prueba automatizada que busca datos personales en esta respuesta. Además hay un límite de 30 consultas por minuto, para que nadie pruebe códigos al azar.»
+> «Esto es lo que ve la clienta, sin crear una cuenta. La placa va enmascarada y no hay ningún dato personal, ni notas internas, ni nombres de empleados. El servidor solo envía una lista cerrada de campos, y tenemos una prueba automatizada que busca datos personales en esta respuesta. Su informe PDF tampoco tiene su nombre ni su teléfono; sí trae el diagnóstico y el trabajo, porque es la constancia del servicio ya terminado. Hay un límite de 30 consultas por minuto, para que nadie pruebe códigos al azar.»
 
 ---
 
-### Paso 11 — Anonimización · ⏱ 11:45 a 13:30
+### Paso 11 — Anonimización · ⏱ 12:00 a 13:30
 
 **Hacer (ventana C, administrador):**
 1. **Clientes** → abra **Pedro Ruiz (demo)** → **Anonimizar** → escriba `ANONIMIZAR` → **Anonimizar**. Señale el error **«El cliente tiene órdenes abiertas. Entréguelas o cancélelas antes de anonimizarlo.»** → **Volver**.
@@ -238,7 +243,7 @@ Formato: **⏱ tiempo acumulado** · **Hacer** (acciones exactas) · **Decir** (
 ### Cierre — ⏱ 13:30 a 14:00
 
 **Decir:**
-> «En resumen: el flujo completo funciona, cada acción queda registrada con su autor y su hora, el inventario no se descuadra y el cliente está informado sin exponer sus datos. Esto está respaldado por 214 pruebas automatizadas contra PostgreSQL. Lo que sigue es desplegarlo con HTTPS, construir el reporte de tiempos por etapa y hacer el piloto en talleres reales para medir el impacto.»
+> «En resumen: el flujo completo funciona, para carros y motos; cada acción queda registrada con su autor y su hora, el inventario no se descuadra y el cliente está informado y recibe su informe sin exponer sus datos. Esto está respaldado por 263 pruebas automatizadas contra PostgreSQL, que cubren el 91 % del backend. Lo que sigue es desplegarlo con HTTPS, construir el reporte de tiempos por etapa y hacer el piloto en talleres reales para medir el impacto.»
 
 ---
 
@@ -249,8 +254,10 @@ Formato: **⏱ tiempo acumulado** · **Hacer** (acciones exactas) · **Decir** (
 | Aislamiento entre talleres | En otro navegador, ingrese como `admin@chipichape.demo.co` y busque la placa `ABC123` | «Es otro carro, un Renault Logan. Cada taller ve solo lo suyo, aunque compartan la base de datos.» |
 | Desactivación inmediata | En C, **Usuarios** → desactive a «Mecánico Norte» (fallará si tiene órdenes abiertas: muéstrelo) | RN-16: primero hay que reasignar sus órdenes |
 | Devolver de estado | Administrador en una orden en Reparado → **Devolver a …** con nota | Solo el administrador, siempre con nota |
-| Pruebas automatizadas | Terminal: `uv run pytest -q` | 214 pruebas pasan (tarda unos 100 segundos) |
-| Documentación de la API | `http://localhost:8000/api/docs` | 35 operaciones documentadas automáticamente |
+| Pruebas automatizadas | Terminal: `uv run pytest -q` | 263 pruebas pasan (tarda unos 110 segundos) |
+| Documentación de la API | `http://localhost:8000/api/docs` | 38 operaciones documentadas automáticamente |
+| Informe de una orden no entregada | En el navegador, abra `/api/v1/ordenes/{id}/informe.pdf` de una orden abierta | 409: «El informe PDF solo está disponible cuando la orden fue entregada» |
+| Categoría «Otro» | Nueva orden → **Otro** sin describirlo | El sistema exige **Describa el problema** |
 
 ## 4. Lista de verificación final
 

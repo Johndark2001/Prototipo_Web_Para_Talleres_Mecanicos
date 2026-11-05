@@ -76,6 +76,20 @@
   background-size: 56px 56px;
 }
 
+/* Escena de fondo del módulo (FondoModulo.jsx): se desvanece hacia arriba y a la izquierda
+   para que el contenido quede sobre fondo limpio, y entra con un fundido corto al cambiar
+   de módulo. La opacidad final la fija el componente. */
+.fondo-escena {
+  mask-image: linear-gradient(to top left, #000 30%, transparent 78%);
+  animation: fondo-entrar 500ms var(--ease-salida) both;
+}
+
+@keyframes fondo-entrar {
+  from {
+    opacity: 0;
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;

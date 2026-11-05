@@ -27,7 +27,7 @@ export default function SelectorVehiculo({ valor, alCambiar, error }) {
               <span className="truncate font-medium">{describirVehiculo(valor)}</span>
               <EtiquetaTipo tipo={valor.tipo} />
             </p>
-            <p className="truncate text-sm text-texto-suave">Dueño: {valor.cliente.nombre}</p>
+            <p className="truncate text-sm text-texto-suave">Cliente: {valor.cliente.nombre}</p>
           </div>
         </div>
         <Boton variante="texto" onClick={() => alCambiar(null)}>

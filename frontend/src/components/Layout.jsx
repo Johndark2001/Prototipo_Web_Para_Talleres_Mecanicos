@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router'
 import { ETIQUETAS_ROL, ROLES, ROLES_EDITAN_CLIENTES } from '../constantes.js'
 import { useSesion } from '../sesion/contexto.js'
 import BuscadorPlaca from './BuscadorPlaca.jsx'
+import FondoModulo from './FondoModulo.jsx'
 import Icono from './Icono.jsx'
 import Logo, { MarcaLogo } from './Logo.jsx'
 
@@ -53,7 +54,8 @@ export default function Layout() {
   const opciones = MENU.filter((item) => item.roles.includes(usuario.rol))
 
   return (
-    <div className="flex min-h-dvh flex-col md:flex-row">
+    <div className="isolate flex min-h-dvh flex-col md:flex-row">
+      <FondoModulo />
       <a
         href="#contenido"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-superficie focus:p-2"

@@ -3,8 +3,8 @@
 | Campo | Valor |
 |---|---|
 | Para quién | El autor, como preparación para la sustentación |
-| Corte | Commit `84f20f3` (28/10/2026) |
-| Total | 64 preguntas en 8 categorías |
+| Corte | Commit `e51d187` (04/11/2026) más los ajustes visuales del 05/11/2026 (SPEC §21.11) |
+| Total | 72 preguntas en 9 categorías |
 
 **Regla de oro:** si la respuesta es «todavía no», dígalo así y explique cuándo y cómo se hará. El jurado valora más la honestidad sobre el alcance que una respuesta adornada.
 
@@ -87,7 +87,7 @@ Porque el precio cambia con el tiempo. Si la orden leyera el precio actual, una 
 Para no tener dos fuentes de verdad. El total se calcula siempre como la suma de cantidad × precio de las líneas (RN-06), en el servidor y con decimales exactos. Nunca se acepta un total enviado desde el navegador.
 
 **23. ¿Cómo maneja los cambios en la estructura de la base?**
-Con migraciones versionadas de Alembic: hay cinco, de la 0001 a la 0005, y cada una tiene su reversión. La suite de pruebas aplica todas las migraciones desde cero en cada ejecución, así que también se prueban.
+Con migraciones versionadas de Alembic: hay siete, de la 0001 a la 0007, y cada una tiene su reversión. Las dos últimas muestran cómo se cambia el modelo sin perder datos: la 0006 agrega el tipo de vehículo y deja los existentes como carros, y la 0007 agrega la categoría del problema y copia el motivo anterior a la observación del cliente. La suite de pruebas aplica todas las migraciones desde cero en cada ejecución, así que también se prueban.
 
 **24. ¿Usó SQLite para las pruebas?**
 No. Las pruebas corren contra PostgreSQL real, en una base exclusiva que se vacía en cada prueba. SQLite no tiene los mismos bloqueos, índices parciales ni restricciones, y las pruebas no habrían demostrado lo mismo.
@@ -128,7 +128,7 @@ Está planificado para la Semana 5: el límite de intentos de inicio de sesión,
 Primero una especificación aprobada (SPEC y seis ADR, Fase 0) y después cortes verticales semanales: base de datos, API e interfaz de cada función a la vez. Cada semana terminaba con una demostración y la aprobación del autor, y las decisiones se registraron en el SPEC.
 
 **34. ¿Cuántas pruebas tiene y qué cubren?**
-214 pruebas automatizadas, todas pasan: 180 funciones, algunas parametrizadas, en 13 archivos. Cubren autenticación, permisos, aislamiento entre talleres, transiciones de estado, stock, liquidación, seguimiento y anonimización, más tres pruebas de concurrencia.
+263 pruebas automatizadas, todas pasan: 200 funciones, algunas parametrizadas, en 16 archivos. Cubren autenticación, permisos, aislamiento entre talleres, transiciones de estado, stock, liquidación, seguimiento, anonimización, tipo de vehículo, categoría del problema, informe PDF y alta de cliente con vehículo, más tres pruebas de concurrencia. La cobertura del backend es del 91 %, y del 97 % sin contar los dos scripts de consola.
 
 **35. ¿Por qué no hay pruebas automatizadas de la interfaz?**
 Por el tamaño del equipo, quedaron fuera de alcance (SPEC §15). La interfaz se validó con una lista de verificación manual por pantalla: cuatro anchos, teclado y los estados vacío, de error y de carga. En la Semana 4 hubo una validación de punta a punta con 32 de 32 verificaciones.
@@ -153,7 +153,7 @@ Sí. Tiene especificación, ADR, modelo de datos documentado, un README de puest
 ## 6. Gestión de proyecto (8)
 
 **41. ¿Cumplió el cronograma?**
-El plan vigente preveía el MVP en 4 semanas, del 26/10 al 22/11/2026. Las cuatro semanas funcionales quedaron cerradas entre el 23 y el 26/10, y la anonimización el 28/10. Lo único que se movió fue el despliegue, que pasó a la Semana 5 por la decisión S4-8, como preveía el plan de recortes.
+El plan vigente preveía el MVP en 4 semanas, del 26/10 al 22/11/2026. Las cuatro semanas funcionales quedaron cerradas entre el 23 y el 26/10, y la anonimización el 28/10. Con ese margen, el 04/11 y el 05/11 incorporé mejoras pedidas tras revisar el MVP (tipo de vehículo, categoría del problema, informe PDF, alta de cliente con vehículo, rediseño), todas registradas como decisiones en el SPEC. Lo único que se movió fue el despliegue, que pasó a la Semana 5 por la decisión S4-8, como preveía el plan de recortes.
 
 **42. ¿Qué metodología siguió?**
 Desarrollo guiado por especificación con entregas incrementales semanales (cortes verticales), priorización MoSCoW de los requisitos y aprobación explícita de cada fase. No es Scrum formal porque el equipo es de una persona, pero tomé su idea de entregas cortas y demostrables.
@@ -190,7 +190,7 @@ Del cliente: nombre, teléfono, correo y documento (los dos últimos opcionales)
 No se registra. El sistema lo rechaza en la interfaz, en la API y en la base de datos (`CHECK autoriza_datos = true`). El taller puede atender el carro, pero no registrarlo en el sistema a nombre de esa persona.
 
 **52. ¿Qué ve quien tenga el enlace de seguimiento?**
-El taller, el número de orden, la placa enmascarada (ABC***), la marca y el modelo, el estado, la línea de tiempo y el cobro. Nada más: no ve el nombre, el teléfono, el documento, el correo, el kilometraje, el motivo, las notas ni los empleados. El servidor usa una lista blanca de campos y una prueba lo verifica.
+El taller, el número de orden, la placa enmascarada (ABC***), la marca y el modelo, el estado, la línea de tiempo y el cobro. Nada más: no ve el nombre, el teléfono, el documento, el correo, el kilometraje, el motivo, las notas ni los empleados. El servidor usa una lista blanca de campos y una prueba lo verifica. Cuando la orden se entrega, puede descargar además el informe PDF, que tampoco trae nombre, teléfono ni kilometraje y lleva la placa enmascarada; sí trae la categoría, la observación, el diagnóstico y el trabajo realizado (pregunta 67).
 
 **53. ¿Y si alguien prueba códigos al azar?**
 El código tiene 128 bits aleatorios, así que adivinarlo es inviable. Además hay un límite de 30 consultas por minuto por IP y un código mal formado ni siquiera llega a la base.
@@ -227,7 +227,35 @@ No, y es a propósito (A-4): si se pudiera deshacer, los datos no estarían real
 Sí. El enlace nunca mostró datos personales, así que no cambia. Lo verifican una prueba automatizada y la validación manual.
 
 **63. ¿La placa no es un dato personal?**
-La placa identifica al vehículo, no directamente a la persona, y sostiene el historial del carro, que puede cambiar de dueño. Por eso no se anonimiza (A-5). En el enlace público sí va enmascarada. Si un análisis jurídico la considerara dato personal, se podría extender la anonimización.
+La placa identifica al vehículo, no directamente a la persona, y sostiene el historial del carro, que puede cambiar de propietario. Por eso no se anonimiza (A-5). En el enlace público sí va enmascarada. Si un análisis jurídico la considerara dato personal, se podría extender la anonimización.
 
 **64. ¿Qué limitaciones tiene la anonimización?**
-Tres, documentadas. Primero, los textos libres de las órdenes (motivo, diagnóstico, trabajo, notas) no se modifican: si alguien escribió allí datos personales, quedan (A-6), y la mitigación es la instrucción al taller de no escribirlos. Segundo, la auditoría está en el propio cliente y no en una tabla general (A-7). Tercero, las copias de seguridad anteriores a la anonimización conservan los datos hasta que venzan: falta definir su política de conservación en el despliegue.
+Tres, documentadas. Primero, los textos libres de las órdenes (observación del cliente, diagnóstico, trabajo, notas) no se modifican: si alguien escribió allí datos personales, quedan (A-6), y como la observación, el diagnóstico y el trabajo también salen en el PDF público, la instrucción al taller de no escribirlos es más importante. Segundo, la auditoría está en el propio cliente y no en una tabla general (A-7). Tercero, las copias de seguridad anteriores a la anonimización conservan los datos hasta que venzan: falta definir su política de conservación en el despliegue.
+
+---
+
+## 9. Cambios recientes: carros y motos, categorías, informe PDF e interfaz (8)
+
+**65. ¿Por qué distinguir carros de motos?**
+Porque un taller puede recibir carros y motos, y los problemas típicos no son los mismos: una moto tiene cadena y kit de arrastre; un carro, aire acondicionado y alineación. El tipo es obligatorio (V-1), filtra la lista de vehículos (V-3) y decide qué categorías del problema se ofrecen. La migración 0006 dejó los vehículos existentes como carros, sin perder datos.
+
+**66. ¿Por qué el informe PDF se genera en el servidor y no en el navegador?**
+Para que la regla «solo existe si la orden está entregada» la haga cumplir el servidor y quede cubierta por pruebas automatizadas: una orden abierta o cancelada responde 409. Usé fpdf2, que es Python puro y no necesita programas instalados en el servidor, algo importante para un plan gratuito (O-4). Fue una dependencia nueva y la registré como decisión, como exige el SPEC §16.
+
+**67. ¿El PDF público no contradice la regla de no mostrar datos en el enlace?**
+Es una excepción acotada y aprobada (O-3). El PDF público sigue sin nombre, teléfono ni kilometraje, y con la placa enmascarada. Sí incluye la categoría, la observación, el diagnóstico y el trabajo, porque es la constancia del servicio ya terminado: solo existe cuando la orden fue entregada. El riesgo es que el taller escriba datos personales en esos textos; por eso los manuales lo advierten.
+
+**68. ¿Por qué las categorías son un catálogo fijo y no texto libre?**
+Para poder contar después cuáles son los problemas más frecuentes, que es información útil para el taller y para la tesis. Son 22 categorías para carro y 20 para moto, con «Otro» y su descripción obligatoria para lo que no encaje. Se guarda el nombre y no un código: si mañana cambia el catálogo, las órdenes viejas y sus PDF no cambian (O-5). La observación del cliente queda aparte, con sus palabras.
+
+**69. ¿Qué pasó con las órdenes que ya tenían «motivo de ingreso»?**
+La migración 0007 copió el motivo a la observación del cliente y las dejó «Sin categoría»; no se perdió nada. La columna `motivo_ingreso` se conserva y ahora se compone como «categoría — observación», y el API todavía acepta la forma anterior (O-6). Es una forma de evolucionar el modelo sin romper lo que ya funcionaba.
+
+**70. ¿Cómo se garantiza que el cliente y su vehículo se guarden juntos?**
+Con una sola transacción en el servidor (O-8). Si la placa ya existe o un dato del vehículo es inválido, no se guarda ni el cliente ni el vehículo, y el error indica el campo exacto. Hay pruebas para el caso feliz, para el registro sin vehículo y para la placa repetida.
+
+**71. ¿Por qué la interfaz dice «Cliente» y no «Dueño»?**
+Porque quien lleva el vehículo al taller no siempre es su propietario: puede ser un familiar, un conductor o un empleado. Fue un cambio solo de interfaz (T-1): el modelo ya se llamaba `cliente` y las reglas de cambio de titularidad (RN-21) siguen igual.
+
+**72. ¿Los fondos ilustrados no afectan la accesibilidad?**
+Es un compromiso que tomé de forma consciente (T-3). Los fondos son SVG decorativos, ocultos para los lectores de pantalla y sin clics. Las tarjetas, listas y formularios son opacos, así que su contraste no cambia. Elegí una opacidad del 50 % para que la identidad del taller se note. Con ese valor, un texto gris que quede justo sobre una línea del dibujo baja a un contraste de cerca de 3:1, por debajo del 4,5:1 que pide RNF-07. Está registrado como limitación y se puede corregir bajando la opacidad sin tocar nada más.
